@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // ✅ استيراد Link من react-router-dom
 import { 
   Home as HomeIcon, 
   Library, 
@@ -32,10 +33,12 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// ✅ إضافة slugs للروابط
 const HERO_SLIDES = [
   {
     id: 1,
     title: "The Substitute Bride Is Doted on by the Cold-Blooded Emperor",
+    slug: "the-substitute-bride-is-doted-on-by-the-cold-blooded-emperor",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F21%2F3d193696-84b3-46b8-91d4-a80e698ed920.webp&w=1920&q=85&output=webp",
     tags: ["انتقام", "رومانسي", "خيال"],
     type: "مانهوا",
@@ -45,6 +48,7 @@ const HERO_SLIDES = [
   {
     id: 2,
     title: "Once an Assassin, Now a Royal Nanny",
+    slug: "once-an-assassin-now-a-royal-nanny",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F20%2F12c4fba7-71bf-4242-94fc-a8a7ba640189.webp&w=1920&q=85&output=webp",
     tags: ["خيال", "رومانسي", "تناسخ"],
     type: "مانهوا",
@@ -54,6 +58,7 @@ const HERO_SLIDES = [
   {
     id: 3,
     title: "Vengeance Begins with Marriage",
+    slug: "vengeance-begins-with-marriage",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F19%2F71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp&w=1920&q=85&output=webp",
     tags: ["دراما", "رومانسي"],
     type: "مانهوا",
@@ -66,30 +71,35 @@ const MOST_READ_MANGA = [
   {
     id: 1,
     title: "Sleepless Death",
+    slug: "sleepless-death",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F05%2F9adb9016-ff81-4ee1-bfd3-bbd07fadcec5.webp&w=400&q=85&output=webp",
     rating: 10
   },
   {
     id: 2,
     title: "Once an Assassin, Now a Royal Nanny",
+    slug: "once-an-assassin-now-a-royal-nanny",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F20%2F12c4fba7-71bf-4242-94fc-a8a7ba640189.webp&w=400&q=85&output=webp",
     rating: 10
   },
   {
     id: 3,
     title: "The Substitute Bride Is Doted on by the Cold-Blooded Emperor",
+    slug: "the-substitute-bride-is-doted-on-by-the-cold-blooded-emperor",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F21%2F3d193696-84b3-46b8-91d4-a80e698ed920.webp&w=400&q=85&output=webp",
     rating: 7.5
   },
   {
     id: 4,
     title: "Vengeance Begins with Marriage",
+    slug: "vengeance-begins-with-marriage",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F19%2F71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp&w=400&q=85&output=webp",
     rating: 10
   },
   {
     id: 5,
     title: "Only for Love",
+    slug: "only-for-love",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F20%2F8eddb9a9-f9ee-4730-9364-d2b9aa5b2593.webp&w=400&q=85&output=webp",
     rating: 9.44
   }
@@ -99,30 +109,35 @@ const RECENTLY_ADDED_MANGA = [
   {
     id: 1,
     title: "The Rebel Army's Quack Doctor",
+    slug: "the-rebel-armys-quack-doctor",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F10%2Fa565bd5e-fb3f-4386-934c-97481248860c.webp&w=400&q=85&output=webp",
     rating: 9.2
   },
   {
     id: 2,
     title: "The End of Unrequited Love",
+    slug: "the-end-of-unrequited-love",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F25%2F44a51c99-9b2d-4b9a-a968-e5a09712ab41.webp&w=400&q=85&output=webp",
     rating: 8.7
   },
   {
     id: 3,
     title: "My Possession Became a Ghost Story",
+    slug: "my-possession-became-a-ghost-story",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F05%2Ffa3d7014-3380-4715-81b1-f2b4a2988e20.webp&w=400&q=85&output=webp",
     rating: 9.5
   },
   {
     id: 4,
     title: "The Dutiful Kid Who Saved the Villainous Family",
+    slug: "the-dutiful-kid-who-saved-the-villainous-family",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F02%2Fb9648973-e737-4b69-8219-3ec30269c233.webp&w=400&q=85&output=webp",
     rating: 9.8
   },
   {
     id: 5,
     title: "A Bad Example of a Perfect Curse",
+    slug: "a-bad-example-of-a-perfect-curse",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F01%2F18%2F65a3f791-5634-4c70-bea7-c543e57ad88b.webp&w=400&q=85&output=webp",
     rating: 6.13
   }
@@ -132,6 +147,7 @@ const LATEST_UPDATES = [
   {
     id: 1,
     title: "The Substitute Bride Is Doted on by the Cold-Hearted Majesty",
+    slug: "the-substitute-bride-is-doted-on-by-the-cold-blooded-emperor",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F21%2F3d193696-84b3-46b8-91d4-a80e698ed920.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 7.5,
@@ -148,6 +164,7 @@ const LATEST_UPDATES = [
   {
     id: 2,
     title: "Sleepless Death",
+    slug: "sleepless-death",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F05%2F9adb9016-ff81-4ee1-bfd3-bbd07fadcec5.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 10,
@@ -164,6 +181,7 @@ const LATEST_UPDATES = [
   {
     id: 3,
     title: "Vengeance Begins with Marriage",
+    slug: "vengeance-begins-with-marriage",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F19%2F71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 10,
@@ -181,6 +199,7 @@ const LATEST_UPDATES = [
   {
     id: 4,
     title: "Once an Assassin, Now a Royal Nanny",
+    slug: "once-an-assassin-now-a-royal-nanny",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F20%2F12c4fba7-71bf-4242-94fc-a8a7ba640189.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 10,
@@ -197,6 +216,7 @@ const LATEST_UPDATES = [
   {
     id: 5,
     title: "A Secretly Capable Child Is",
+    slug: "a-secretly-capable-child-is",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F02%2Fb9648973-e737-4b69-8219-3ec30269c233.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 8.74,
@@ -213,6 +233,7 @@ const LATEST_UPDATES = [
   {
     id: 6,
     title: "Hush Now, Saintess!",
+    slug: "hush-now-saintess",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F01%2F18%2F65a3f791-5634-4c70-bea7-c543e57ad88b.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 9.25,
@@ -229,6 +250,7 @@ const LATEST_UPDATES = [
   {
     id: 7,
     title: "My Pirate Prince",
+    slug: "my-pirate-prince",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F19%2F71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 5,
@@ -243,6 +265,7 @@ const LATEST_UPDATES = [
   {
     id: 8,
     title: "This Retired Saintess Will",
+    slug: "this-retired-saintess-will-raise-your-property-value",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F01%2F18%2F65a3f791-5634-4c70-bea7-c543e57ad88b.webp&w=400&q=85&output=webp",
     type: "مانهوا",
     rating: 6.67,
@@ -274,13 +297,13 @@ export default function Home() {
         <div className="max-w-7xl w-full flex items-center justify-between">
           {/* Logo & Desktop Nav */}
           <div className="flex items-center gap-8">
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <img 
                 src="https://storage.azoramoon.com/public/upload/2025/12/24/c925c7f3-2310-4e90-9b62-7fae04fe1c36.webp" 
                 alt="Azora Logo" 
                 className="h-12 w-12 object-contain"
               />
-            </a>
+            </Link>
             
             <div className="hidden md:flex items-center gap-6">
               <NavLink icon={<HomeIcon size={20} />} label="الرئيسية" active />
@@ -325,42 +348,44 @@ export default function Home() {
           >
             {HERO_SLIDES.map((slide) => (
               <SwiperSlide key={slide.id}>
-                <div className="relative h-full w-full group cursor-pointer">
-                  <img 
-                    src={slide.image} 
-                    alt={slide.title} 
-                    className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
-                  
-                  <div className="absolute bottom-12 left-0 right-0 px-6 text-center z-10">
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      className="flex flex-col items-center gap-3"
-                    >
-                      <span className="px-3 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-teal-400 text-black text-xs font-bold flex items-center gap-1">
-                        {slide.statusIcon} {slide.status}
+                <Link to={`/novel/${slide.slug}`} className="block h-full w-full">
+                  <div className="relative h-full w-full group cursor-pointer">
+                    <img 
+                      src={slide.image} 
+                      alt={slide.title} 
+                      className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
+                    
+                    <div className="absolute bottom-12 left-0 right-0 px-6 text-center z-10">
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        className="flex flex-col items-center gap-3"
+                      >
+                        <span className="px-3 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-teal-400 text-black text-xs font-bold flex items-center gap-1">
+                          {slide.statusIcon} {slide.status}
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg max-w-3xl">
+                          {slide.title}
+                        </h2>
+                        <div className="flex gap-2">
+                          {slide.tags.map(tag => (
+                            <span key={tag} className="px-3 py-1 rounded-full border border-white/20 bg-white/5 text-xs text-white backdrop-blur-sm">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </div>
+                    
+                    <div className="absolute top-4 left-4 z-10">
+                      <span className="px-2 py-1 bg-black/70 text-white text-[10px] font-bold rounded uppercase">
+                        {slide.type}
                       </span>
-                      <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg max-w-3xl">
-                        {slide.title}
-                      </h2>
-                      <div className="flex gap-2">
-                        {slide.tags.map(tag => (
-                          <span key={tag} className="px-3 py-1 rounded-full border border-white/20 bg-white/5 text-xs text-white backdrop-blur-sm">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </motion.div>
+                    </div>
                   </div>
-                  
-                  <div className="absolute top-4 left-4 z-10">
-                    <span className="px-2 py-1 bg-black/70 text-white text-[10px] font-bold rounded uppercase">
-                      {slide.type}
-                    </span>
-                  </div>
-                </div>
+                </Link>
               </SwiperSlide>
             ))}
           </Swiper>
@@ -388,7 +413,7 @@ export default function Home() {
             >
               {MOST_READ_MANGA.map((manga) => (
                 <SwiperSlide key={manga.id} className="pb-6 px-1">
-                  <div className="relative w-full aspect-[2/3] group perspective-[1000px] cursor-pointer">
+                  <Link to={`/novel/${manga.slug}`} className="block relative w-full aspect-[2/3] group perspective-[1000px] cursor-pointer">
                     <div className="w-full h-full relative transition-all duration-500 ease-out transform-style-3d group-hover:[transform:rotateX(15deg)_translateY(-8px)] origin-bottom shadow-md group-hover:shadow-2xl rounded-xl overflow-hidden border border-white/5">
                       <img 
                         src={manga.image} 
@@ -405,14 +430,14 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </SwiperSlide>
               ))}
             </Swiper>
           </div>
         </section>
 
-        {/* Recently Added Section - moved to be directly under Most Read */}
+        {/* Recently Added Section */}
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-2 mb-6 text-white">
@@ -434,7 +459,7 @@ export default function Home() {
             >
               {RECENTLY_ADDED_MANGA.map((manga) => (
                 <SwiperSlide key={manga.id} className="pb-6 px-1">
-                  <div className="relative w-full aspect-[2/3] group perspective-[1000px] cursor-pointer">
+                  <Link to={`/novel/${manga.slug}`} className="block relative w-full aspect-[2/3] group perspective-[1000px] cursor-pointer">
                     <div className="w-full h-full relative transition-all duration-500 ease-out transform-style-3d group-hover:[transform:rotateX(15deg)_translateY(-8px)] origin-bottom shadow-md group-hover:shadow-2xl rounded-xl overflow-hidden border border-white/5">
                       <img 
                         src={manga.image} 
@@ -451,14 +476,14 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </SwiperSlide>
               ))}
             </Swiper>
           </div>
         </section>
 
-        {/* Latest Updates Section - placed last */}
+        {/* Latest Updates Section */}
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
             
@@ -478,13 +503,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Grid layout matching image exactly */}
+            {/* Grid layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               {LATEST_UPDATES.map((update) => (
                 <div key={update.id} className="bg-[#0c0c0c] rounded-xl border border-white/5 overflow-hidden flex h-[300px] hover:border-white/10 transition-colors">
                   
                   {/* Right Side: Image (First in RTL flex) */}
-                  <div className="w-[42%] relative shrink-0 h-full">
+                  <Link to={`/novel/${update.slug}`} className="w-[42%] relative shrink-0 h-full block">
                     <img 
                       src={update.image} 
                       alt={update.title} 
@@ -510,14 +535,16 @@ export default function Home() {
                         <Flame size={16} className="fill-white" />
                       </div>
                     )}
-                  </div>
+                  </Link>
 
                   {/* Left Side: Content Box */}
                   <div className="flex-1 p-4 flex flex-col relative z-10 w-[58%]" dir="ltr">
                     
-                    <h3 className="text-white font-bold text-[17px] leading-snug line-clamp-2 mb-2 text-left" dir="ltr">
-                      {update.title}
-                    </h3>
+                    <Link to={`/novel/${update.slug}`} className="block">
+                      <h3 className="text-white font-bold text-[17px] leading-snug line-clamp-2 mb-2 text-left hover:text-[#ff3b8d] transition-colors" dir="ltr">
+                        {update.title}
+                      </h3>
+                    </Link>
                     
                     {/* Status & Rating line */}
                     <div className="flex justify-between items-center mb-4 flex-row-reverse" dir="ltr">
@@ -557,7 +584,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Mobile Menu Overlay - Colors changed to white, added separators */}
+      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div 
@@ -591,8 +618,8 @@ export default function Home() {
 
 function NavLink({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
   return (
-    <a 
-      href="#" 
+    <Link 
+      to="#" 
       className={cn(
         "relative flex items-center gap-2 pb-2 transition-all group",
         active ? "text-white font-bold" : "text-gray-400 hover:text-white"
@@ -601,15 +628,15 @@ function NavLink({ icon, label, active = false }: { icon: React.ReactNode, label
       <span className={active ? "text-white" : "text-gray-400 group-hover:text-white transition-colors"}>{icon}</span>
       <span className="leading-none mt-1">{label}</span>
       {active && <div className="absolute -bottom-5 left-0 right-0 h-1 bg-white rounded-t-full" />}
-    </a>
+    </Link>
   );
 }
 
 function MobileNavLink({ icon, label }: { icon: React.ReactNode, label: string }) {
   return (
-    <a href="#" className="flex items-center gap-4 py-5 text-xl font-bold text-white hover:text-white/80 transition-colors border-b border-white/10 last:border-b-0">
+    <Link to="#" className="flex items-center gap-4 py-5 text-xl font-bold text-white hover:text-white/80 transition-colors border-b border-white/10 last:border-b-0">
       <span className="text-white">{icon}</span>
       {label}
-    </a>
+    </Link>
   );
 }

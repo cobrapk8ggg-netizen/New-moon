@@ -1,6 +1,10 @@
 import React from 'react';
-import Home from './src/screens/Home';
+import NovelDetails from './src/screens/NovelDetails';
 
 export default function App() {
-  return <Home />;
+  return (
+    <div dir="rtl">
+      <NovelDetails />
+    </div>
+  );
 }

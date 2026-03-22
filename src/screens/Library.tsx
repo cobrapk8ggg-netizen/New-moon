@@ -1,9 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/Header';
-import { BookOpen, Search, Star } from 'lucide-react';
+import { novelService } from '../services/novel';
+import { BookOpen, Star, Heart } from 'lucide-react';
 
 export default function Library() {
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'favorites' | 'history'>('favorites');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLibrary = async () => {
+      try {
+        setLoading(true);
+        const favs = await novelService.getUserLibrary(undefined, 'favorites');
+        const hist = await novelService.getUserLibrary(undefined, 'history');
+        setFavorites(favs);
+        setHistory(hist);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLibrary();
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -13,6 +36,8 @@ export default function Library() {
     }
   }, [isDarkMode]);
 
+  const items = activeTab === 'favorites' ? favorites : history;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
@@ -21,28 +46,54 @@ export default function Library() {
           <BookOpen size={32} className="text-primary" />
           <h1 className="text-3xl font-bold">المكتبة</h1>
         </div>
-        <div className="relative mb-8">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="ابحث عن مانجا أو رواية..."
-            className="w-full bg-[#111111] border border-white/10 rounded-xl py-3 pr-12 pl-4 text-white placeholder-gray-500 focus:outline-none focus:border-primary"
-          />
+
+        <div className="flex gap-4 mb-6 border-b border-border">
+          <button
+            onClick={() => setActiveTab('favorites')}
+            className={`pb-2 px-4 font-medium ${activeTab === 'favorites' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}`}
+          >
+            المفضلة ({favorites.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`pb-2 px-4 font-medium ${activeTab === 'history' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}`}
+          >
+            سجل القراءة ({history.length})
+          </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[1,2,3,4,5,6].map((i) => (
-            <div key={i} className="bg-[#111111] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all">
-              <div className="aspect-[2/3] bg-gradient-to-br from-gray-800 to-gray-900"></div>
-              <div className="p-3">
-                <h3 className="text-sm font-bold line-clamp-2">عنوان المانجا {i}</h3>
-                <div className="flex items-center gap-1 mt-2 text-yellow-500">
-                  <Star size={14} fill="currentColor" />
-                  <span className="text-xs">8.5</span>
+
+        {loading ? (
+          <div className="text-center py-12">جاري التحميل...</div>
+        ) : items.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            {activeTab === 'favorites' ? 'لا توجد روايات في المفضلة' : 'لا يوجد سجل قراءة'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {items.map((item: any) => (
+              <Link key={item.novelId} to={`/novel/${item.novelId}`} className="block bg-[#111111] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all">
+                <div className="aspect-[2/3] relative">
+                  <img src={item.cover} alt={item.title} className="w-full h-full object-cover" />
+                  {activeTab === 'history' && (
+                    <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                      تقدم {item.progress}%
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-bold line-clamp-2">{item.title}</h3>
+                  <div className="flex items-center gap-1 mt-2 text-yellow-500">
+                    <Star size={14} fill="currentColor" />
+                    <span className="text-xs">-</span>
+                  </div>
+                  {activeTab === 'history' && item.lastChapterTitle && (
+                    <p className="text-xs text-gray-400 mt-1">آخر فصل: {item.lastChapterTitle}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

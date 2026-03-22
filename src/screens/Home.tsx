@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { motion, useAnimation, useInView, AnimatePresence } from 'motion/react';
-import { TrendingUp, PlusCircle, Clock, Flame, Star, ChevronLeft, ChevronRight, BookOpen, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { TrendingUp, PlusCircle, Sparkles, Flame, Star, BookOpen } from 'lucide-react';
 import Header from '../components/Header';
 import { novelService, Novel } from '../services/novel';
 
@@ -100,42 +101,48 @@ const getStatusStyle = (status: string) => {
 
 export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [heroNovels, setHeroNovels] = useState<Novel[]>([]);
-  const [trendingNovels, setTrendingNovels] = useState<Novel[]>([]);
-  const [recentNovels, setRecentNovels] = useState<Novel[]>([]);
-  const [latestUpdates, setLatestUpdates] = useState<Novel[]>([]);
   const [latestPage, setLatestPage] = useState(1);
   const [hasMoreUpdates, setHasMoreUpdates] = useState(true);
   const [loadingUpdates, setLoadingUpdates] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [latestUpdates, setLatestUpdates] = useState<Novel[]>([]);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const controls = useAnimation();
+  const [activeSlideKey, setActiveSlideKey] = useState(0);
 
-  // Fetch initial data
+  // استخدام React Query مع staleTime طويل جداً للتخزين المؤقت
+  const { data: heroData, isLoading: heroLoading } = useQuery({
+    queryKey: ['heroNovels'],
+    queryFn: () => novelService.getNovels({ filter: 'trending', timeRange: 'week', limit: 5 }),
+    staleTime: 30 * 60 * 1000, // 30 دقيقة
+    gcTime: 60 * 60 * 1000,    // ساعة
+  });
+
+  const { data: trendingData, isLoading: trendingLoading } = useQuery({
+    queryKey: ['trendingNovels'],
+    queryFn: () => novelService.getNovels({ filter: 'trending', timeRange: 'week', limit: 12 }),
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
+
+  const { data: recentData, isLoading: recentLoading } = useQuery({
+    queryKey: ['recentNovels'],
+    queryFn: () => novelService.getNovels({ filter: 'latest_added', limit: 12 }),
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
+
+  // تحميل الصفحة الأولى من آخر التحديثات (بدون React Query لسهولة الـ infinite scroll)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFirstPage = async () => {
       try {
-        setLoading(true);
-        const [hero, trending, recent, updates] = await Promise.all([
-          novelService.getNovels({ filter: 'trending', timeRange: 'week', limit: 5 }),
-          novelService.getNovels({ filter: 'trending', timeRange: 'week', limit: 12 }),
-          novelService.getNovels({ filter: 'latest_added', limit: 12 }),
-          novelService.getNovels({ filter: 'latest_updates', page: 1, limit: 25 }),
-        ]);
-        setHeroNovels(hero.novels);
-        setTrendingNovels(trending.novels);
-        setRecentNovels(recent.novels);
-        setLatestUpdates(updates.novels);
-        setHasMoreUpdates(updates.totalPages > 1);
+        const res = await novelService.getNovels({ filter: 'latest_updates', page: 1, limit: 25 });
+        setLatestUpdates(res.novels);
+        setHasMoreUpdates(res.totalPages > 1);
         setLatestPage(1);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.error(err);
       }
     };
-    fetchData();
+    fetchFirstPage();
   }, []);
 
   // Load more updates on scroll
@@ -148,14 +155,12 @@ export default function Home() {
       setLatestUpdates(prev => [...prev, ...res.novels]);
       setLatestPage(nextPage);
       setHasMoreUpdates(nextPage < res.totalPages);
-      // Trigger animation for new items
-      controls.start('visible');
     } catch (err) {
       console.error(err);
     } finally {
       setLoadingUpdates(false);
     }
-  }, [latestPage, hasMoreUpdates, loadingUpdates, controls]);
+  }, [latestPage, hasMoreUpdates, loadingUpdates]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -180,16 +185,10 @@ export default function Home() {
     }
   }, [isDarkMode]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background text-foreground" dir="rtl">
-        <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-        <div className="flex items-center justify-center h-64 text-red-500">
-          خطأ: {error}
-        </div>
-      </div>
-    );
-  }
+  const heroNovels = heroData?.novels || [];
+  const trendingNovels = trendingData?.novels || [];
+  const recentNovels = recentData?.novels || [];
+  const isLoading = heroLoading || trendingLoading || recentLoading;
 
   return (
     <div
@@ -200,7 +199,7 @@ export default function Home() {
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
       <main className="pb-16">
-        {/* Hero Slider with enhanced animations */}
+        {/* Hero Slider with animation on every slide change */}
         <section className="h-[430px] w-full overflow-hidden">
           <Swiper
             modules={[Autoplay, Pagination, Navigation]}
@@ -208,17 +207,18 @@ export default function Home() {
             pagination={{ clickable: true }}
             loop
             className="h-full w-full"
-            onSlideChange={() => {
-              // Optional: trigger animation reset if needed
+            onSlideChangeTransitionEnd={(swiper) => {
+              // Force re-render of the active slide key to trigger animation
+              setActiveSlideKey(swiper.realIndex);
             }}
           >
-            {loading
+            {isLoading
               ? Array.from({ length: 3 }).map((_, i) => (
                   <SwiperSlide key={i}>
                     <div className="relative h-full w-full bg-gray-800 animate-pulse" />
                   </SwiperSlide>
                 ))
-              : heroNovels.map((novel) => (
+              : heroNovels.map((novel, idx) => (
                   <SwiperSlide key={novel._id}>
                     <Link to={`/novel/${novel._id}`} className="block h-full w-full">
                       <div className="relative h-full w-full group">
@@ -230,13 +230,12 @@ export default function Home() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                         <div className="absolute bottom-12 left-0 right-0 px-6 text-center z-10">
                           <motion.div
-                            key={novel._id} // important to re-trigger animation on slide change
+                            key={`slide-content-${activeSlideKey}-${idx}`}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, type: 'spring', stiffness: 100, damping: 15 }}
                             className="flex flex-col items-center gap-3"
                           >
-                            {/* Remove "رائج" badge */}
                             <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg max-w-3xl">
                               {novel.title}
                             </h2>
@@ -264,11 +263,11 @@ export default function Home() {
           </Swiper>
         </section>
 
-        {/* Section: Most Read (الأكثر قراءة) */}
+        {/* Section: Most Read (الأكثر قراءة) - white icon */}
         <section className="px-4 md:px-8 mt-12">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
-              <TrendingUp size={24} className="text-orange-500" />
+              <TrendingUp size={24} className="text-white" />
               <h2 className="text-xl font-bold">الأكثر قراءة</h2>
             </div>
             <Swiper
@@ -283,7 +282,7 @@ export default function Home() {
               }}
               className="py-4"
             >
-              {loading
+              {isLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
                     <SwiperSlide key={i}>
                       <NovelCardSkeleton />
@@ -298,11 +297,11 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section: Recently Added (أضيف حديثاً) */}
+        {/* Section: Recently Added (أضيف حديثاً) - white icon */}
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
-              <PlusCircle size={24} className="text-green-500" />
+              <PlusCircle size={24} className="text-white" />
               <h2 className="text-xl font-bold">أضيف حديثاً</h2>
             </div>
             <Swiper
@@ -317,7 +316,7 @@ export default function Home() {
               }}
               className="py-4"
             >
-              {loading
+              {isLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
                     <SwiperSlide key={i}>
                       <NovelCardSkeleton />
@@ -336,12 +335,12 @@ export default function Home() {
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-2 mb-8">
-              <Sparkles size={28} className="text-purple-400" />
+              <Sparkles size={28} className="text-white" />
               <h2 className="text-2xl md:text-[26px] font-bold">آخر التحديثات</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-              <AnimatePresence mode="wait">
+              <AnimatePresence>
                 {latestUpdates.map((novel, idx) => (
                   <motion.div
                     key={novel._id}

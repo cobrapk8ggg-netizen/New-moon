@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Star,
   Clock,
-  PlusCircle
+  PlusCircle,
+  Flame
 } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
@@ -125,25 +126,36 @@ const RECENTLY_ADDED_MANGA = [
   }
 ];
 
+// Updated LATEST_UPDATES with full data matching the design
 const LATEST_UPDATES = [
   {
     id: 1,
-    title: "Martial God Asura",
-    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F05%2F9adb9016-ff81-4ee1-bfd3-bbd07fadcec5.webp&w=150&q=85&output=webp",
+    title: "The Substitute Bride Is Doted on by the Cold-Blooded Emperor",
+    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F21%2F3d193696-84b3-46b8-91d4-a80e698ed920.webp&w=150&q=85&output=webp",
     type: "مانهوا",
+    status: "مستمر",
+    rating: 7.5,
     chapters: [
-      { number: "الفصل 405", time: "منذ 3 ساعات" },
-      { number: "الفصل 404", time: "منذ 4 ساعات" }
+      { number: "19 الفصل", time: "جديد" },
+      { number: "18 الفصل", time: "منذ 8 أيام" },
+      { number: "14 الفصل", time: "منذ 29 يوم" },
+      { number: "13 الفصل", time: "منذ 20 يوم" },
+      { number: "12 الفصل", time: "منذ 15 يوم" }
     ]
   },
   {
     id: 2,
-    title: "The Substitute Bride Is Doted on by the Cold-Blooded Emperor",
-    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F02%2F21%2F3d193696-84b3-46b8-91d4-a80e698ed920.webp&w=150&q=85&output=webp",
+    title: "Sleepless Death",
+    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F05%2F9adb9016-ff81-4ee1-bfd3-bbd07fadcec5.webp&w=150&q=85&output=webp",
     type: "مانهوا",
+    status: "مستمر",
+    rating: 10,
     chapters: [
-      { number: "الفصل 195", time: "منذ 5 ساعات" },
-      { number: "الفصل 194", time: "منذ 6 ساعات" }
+      { number: "8 الفصل", time: "جديد" },
+      { number: "7 الفصل", time: "منذ 9 يوم" },
+      { number: "5 الفصل", time: "منذ 16 يوم" },
+      { number: "4 الفصل", time: "منذ 16 يوم" },
+      { number: "3 الفصل", time: "منذ 16 يوم" }
     ]
   },
   {
@@ -151,39 +163,70 @@ const LATEST_UPDATES = [
     title: "Once an Assassin, Now a Royal Nanny",
     image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F20%2F12c4fba7-71bf-4242-94fc-a8a7ba640189.webp&w=150&q=85&output=webp",
     type: "مانهوا",
+    status: "مستمر",
+    rating: 10,
     chapters: [
-      { number: "الفصل 32", time: "منذ 7 ساعات" },
-      { number: "الفصل 31", time: "منذ 8 ساعات" }
+      { number: "10 الفصل", time: "جديد" },
+      { number: "9 الفصل", time: "منذ 9 يوم" },
+      { number: "6 الفصل", time: "منذ 6 يوم" },
+      { number: "5 الفصل", time: "منذ 5 يوم" },
+      { number: "4 الفصل", time: "منذ 4 يوم" }
     ]
   },
   {
     id: 4,
-    title: "Vengeance Begins with Marriage",
-    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F19%2F71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp&w=150&q=85&output=webp",
+    title: "A Secretly Capable Child Is",
+    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F02%2Fb9648973-e737-4b69-8219-3ec30269c233.webp&w=150&q=85&output=webp",
     type: "مانهوا",
+    status: "مستمر",
+    rating: 8.74,
     chapters: [
-      { number: "الفصل 12", time: "منذ 9 ساعات" },
-      { number: "الفصل 11", time: "منذ 10 ساعات" }
+      { number: "29 الفصل", time: "منذ 3 يوم" },
+      { number: "28 الفصل", time: "منذ 11 يوم" },
+      { number: "26 الفصل", time: "منذ 24 يوم" },
+      { number: "25 الفصل", time: "منذ 1 يوم" },
+      { number: "24 الفصل", time: "منذ 1 يوم" }
     ]
   },
   {
     id: 5,
-    title: "Only for Love",
-    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F20%2F8eddb9a9-f9ee-4730-9364-d2b9aa5b2593.webp&w=150&q=85&output=webp",
+    title: "Hush Now, Saintess!",
+    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F06%2Fee251455-5dc0-4849-ab2f-926eba58bbcd.webp&w=150&q=85&output=webp",
     type: "مانهوا",
+    status: "مستمر",
+    rating: 9.25,
     chapters: [
-      { number: "الفصل 5", time: "منذ 11 ساعة" },
-      { number: "الفصل 4", time: "منذ 12 ساعة" }
+      { number: "22 الفصل", time: "منذ 3 يوم" },
+      { number: "21 الفصل", time: "منذ 11 يوم" },
+      { number: "16 الفصل", time: "منذ 15 يوم" },
+      { number: "15 الفصل", time: "منذ 15 يوم" },
+      { number: "14 الفصل", time: "منذ 15 يوم" }
     ]
   },
   {
     id: 6,
-    title: "Sleepless Death",
-    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F05%2F9adb9016-ff81-4ee1-bfd3-bbd07fadcec5.webp&w=150&q=85&output=webp",
+    title: "My Pirate Prince",
+    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F16%2F92a3034e-ea12-4213-8eef-aa488f60936f.webp&w=150&q=85&output=webp",
     type: "مانهوا",
+    status: "مستمر",
+    rating: 5,
     chapters: [
-      { number: "الفصل 80", time: "منذ 14 ساعة" },
-      { number: "الفصل 79", time: "منذ 15 ساعة" }
+      { number: "20 الفصل", time: "منذ 5 يوم" },
+      { number: "19 الفصل", time: "منذ 5 يوم" },
+      { number: "15 الفصل", time: "منذ 5 يوم" },
+      { number: "15 الفصل", time: "منذ 5 يوم" }
+    ]
+  },
+  {
+    id: 7,
+    title: "This Retired Saintess Will Raise Your Property Value",
+    image: "https://wsrv.nl/?url=https%3A%2F%2Fstorage.azoramoon.com%2Fpublic%2Fupload%2F2026%2F03%2F04%2F696675ac-99fb-45a8-b7f3-935947ae0b70.webp&w=150&q=85&output=webp",
+    type: "مانهوا",
+    status: "مستمر",
+    rating: 6.67,
+    chapters: [
+      { number: "19 الفصل", time: "منذ 4 يوم" },
+      { number: "18 الفصل", time: "منذ 11 يوم" }
     ]
   }
 ];
@@ -345,47 +388,79 @@ export default function App() {
           </div>
         </section>
 
-        {/* Latest Updates Section */}
-        <section className="px-4 md:px-8 mt-6">
+        {/* Latest Updates Section - Redesigned to match the image */}
+        <section className="px-4 md:px-8 mt-6 mb-12">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-2 mb-6">
               <Clock size={24} className="text-primary" />
               <h2 className="text-xl font-bold">آخر التحديثات</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Swiper
+              modules={[Navigation]}
+              spaceBetween={20}
+              slidesPerView={1}
+              navigation
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+                1280: { slidesPerView: 4 },
+              }}
+              className="latest-updates-swiper pb-8"
+            >
               {LATEST_UPDATES.map((update) => (
-                <div key={update.id} className="glass p-3 rounded-xl flex gap-4 hover:bg-white/5 transition-colors group cursor-pointer">
-                  <div className="relative w-24 h-32 rounded-lg overflow-hidden shrink-0 shadow-md">
-                    <img 
-                      src={update.image} 
-                      alt={update.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white font-bold">
-                      {update.type}
+                <SwiperSlide key={update.id} className="h-auto">
+                  <div className="glass rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 h-full flex flex-col">
+                    {/* Cover Image */}
+                    <div className="relative aspect-[2/3] w-full overflow-hidden">
+                      <img 
+                        src={update.image} 
+                        alt={update.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <span className="px-2 py-0.5 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold rounded uppercase">
+                          {update.type}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="p-3 flex flex-col flex-1">
+                      {/* Title and Status */}
+                      <div className="mb-2">
+                        <h3 className="font-bold text-sm line-clamp-2 mb-1 hover:text-primary transition-colors">
+                          {update.title}
+                        </h3>
+                        <div className="flex items-center gap-1 text-xs text-muted">
+                          <Flame size={12} className="text-orange-500" />
+                          <span>{update.status}</span>
+                          <span className="mx-1">•</span>
+                          <div className="flex items-center gap-0.5">
+                            <Star size={10} className="fill-orange-400 text-orange-400" />
+                            <span>{update.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Chapters List */}
+                      <div className="mt-auto space-y-1.5">
+                        {update.chapters.map((chapter, idx) => (
+                          <a 
+                            key={idx} 
+                            href="#" 
+                            className="flex justify-between items-center text-xs py-1 px-2 rounded hover:bg-white/10 transition-colors"
+                          >
+                            <span className="font-medium text-foreground/90">{chapter.number}</span>
+                            <span className="text-[11px] text-muted">{chapter.time}</span>
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col flex-1 py-1">
-                    <h3 className="font-bold text-sm line-clamp-2 group-hover:text-primary transition-colors mb-3">
-                      {update.title}
-                    </h3>
-                    <div className="flex flex-col gap-2 mt-auto">
-                      {update.chapters.map((chapter, index) => (
-                        <a 
-                          key={index} 
-                          href="#" 
-                          className="flex justify-between items-center bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded transition-colors"
-                        >
-                          <span className="text-xs font-bold text-foreground/90">{chapter.number}</span>
-                          <span className="text-[10px] text-muted">{chapter.time}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 

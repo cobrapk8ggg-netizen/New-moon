@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import { novelService, Novel, ChapterMeta, ChapterFull } from '../services/novel';
 import { commentService, Comment } from '../services/comment';
@@ -241,6 +242,10 @@ export default function NovelPage() {
       </div>
     );
   }
+
+<Helmet>
+  <title>قمر الروايات - {novel?.title || 'تحميل...'}</title>
+</Helmet>
 
   return (
     <div className="relative min-h-screen bg-background text-foreground" style={{ fontFamily: "'Cairo', sans-serif" }}>

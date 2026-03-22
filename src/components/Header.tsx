@@ -3,6 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, Library, User, Search, Sun, Moon, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+// استيراد الصورة الجديدة من مجلد assets
+import logoImg from '../assets/AF32FFD4-DC2A-4D6A-9C05-F0A2E7288DC9.png';
+
 interface HeaderProps {
   isDarkMode: boolean;
   setIsDarkMode: (value: boolean) => void;
@@ -24,13 +27,17 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
     <>
       <nav className="sticky top-0 z-50 w-full h-16 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/10 shadow-sm">
         <div className="max-w-7xl mx-auto h-full px-4 md:px-8 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
+          {/* Logo Section */}
+          <Link to="/" className="flex items-center gap-3 group">
             <img
-              src="https://storage.azoramoon.com/public/upload/2025/12/24/c925c7f3-2310-4e90-9b62-7fae04fe1c36.webp"
-              alt="Azora Logo"
-              className="h-12 w-12 object-contain"
+              src={logoImg}
+              alt="Qamar Logo"
+              /* تم تكبير الحجم هنا إلى h-16 ليكون بارزاً */
+              className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
             />
+            <span className="text-white font-bold text-xl tracking-tight hidden sm:block">
+              قمر الروايات
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -86,9 +93,9 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
           >
             <div className="flex justify-between items-center">
               <img
-                src="https://storage.azoramoon.com/public/upload/2025/12/24/c925c7f3-2310-4e90-9b62-7fae04fe1c36.webp"
+                src={logoImg}
                 alt="Logo"
-                className="h-12"
+                className="h-20 w-auto object-contain"
               />
               <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right">

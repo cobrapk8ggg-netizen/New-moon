@@ -1,86 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import Header from '../components/Header';
 import { novelService, Novel, ChapterMeta, ChapterFull } from '../services/novel';
-import { commentService, Comment, CommentStats } from '../services/comment';
-import { Star, ChevronLeft, ChevronRight, Heart, ThumbsUp, ThumbsDown, ArrowUpDown, Eye, BookOpen, X, Calendar, MessageCircle } from 'lucide-react';
+import { commentService, Comment } from '../services/comment';
+import { Star, ChevronLeft, ChevronRight, Heart, Eye, BookOpen, ArrowUpDown, Calendar, MessageCircle, Search } from 'lucide-react';
 import { Skeleton, NovelPageSkeleton } from '../components/Skeleton';
-
-// Modal for page selection (same as before)
-const PageSelectorModal = ({ isOpen, onClose, totalPages, currentPage, onSelectPage }: {
-  isOpen: boolean;
-  onClose: () => void;
-  totalPages: number;
-  currentPage: number;
-  onSelectPage: (page: number) => void;
-}) => {
-  const [inputPage, setInputPage] = useState(currentPage.toString());
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const pageNum = parseInt(inputPage);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
-      onSelectPage(pageNum);
-      onClose();
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 50 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 50 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[320px] bg-[#1a1a1a] rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
-          >
-            <div className="p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-white">اختر الصفحة</h3>
-                <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-                  <X size={20} className="text-gray-400" />
-                </button>
-              </div>
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="number"
-                  value={inputPage}
-                  onChange={(e) => setInputPage(e.target.value)}
-                  min={1}
-                  max={totalPages}
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white text-center text-lg focus:outline-none focus:border-primary transition-colors"
-                  placeholder="رقم الصفحة"
-                />
-                <div className="flex gap-2 mt-4">
-                  <button type="submit" className="flex-1 bg-primary hover:bg-primary/80 text-white font-bold py-2 rounded-xl transition-colors">
-                    انتقال
-                  </button>
-                  <button type="button" onClick={onClose} className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-xl transition-colors">
-                    إلغاء
-                  </button>
-                </div>
-              </form>
-              <div className="mt-4 text-center text-sm text-gray-400">
-                الصفحة {currentPage} من {totalPages}
-              </div>
-            </div>
-            <div className="h-1 bg-gradient-to-r from-primary to-purple-500" />
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
+import { CommentSection } from '../components/CommentSection';
+import { ChapterReader } from '../components/ChapterReader';
+import { PageSelectorModal } from '../components/PageSelectorModal'; // same as before
 
 export default function NovelPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -92,16 +20,12 @@ export default function NovelPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [loadingNovel, setLoadingNovel] = useState(true);
   const [loadingChapters, setLoadingChapters] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chapters' | 'description' | 'views'>('chapters');
+  const [activeTab, setActiveTab] = useState<'chapters' | 'description' | 'comments'>('chapters');
   const [chapterSearch, setChapterSearch] = useState('');
   const [selectedChapter, setSelectedChapter] = useState<ChapterFull | null>(null);
   const [showReader, setShowReader] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [commentsStats, setCommentsStats] = useState<CommentStats | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [newComment, setNewComment] = useState('');
-  const [userReaction, setUserReaction] = useState<string | null>(null);
-  const [reactionStats, setReactionStats] = useState({ like: 0, love: 0, funny: 0, sad: 0, angry: 0 });
   const [isFavorite, setIsFavorite] = useState(false);
   const [userProgress, setUserProgress] = useState<{ progress: number; lastChapterId: number; readChapters: number[] }>({
     progress: 0,
@@ -113,7 +37,12 @@ export default function NovelPage() {
   const chaptersPerPage = 25;
   const totalPages = Math.ceil(totalChapters / chaptersPerPage);
 
-  // Fetch novel data
+  // Format date as YYYY/M/D
+  const formatDate = (date: Date | string) => {
+    const d = new Date(date);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  };
+
   useEffect(() => {
     if (!slug) return;
     const fetchNovel = async () => {
@@ -141,7 +70,6 @@ export default function NovelPage() {
     fetchNovel();
   }, [slug]);
 
-  // Fetch chapters with pagination and sort
   useEffect(() => {
     if (!slug) return;
     const fetchChapters = async () => {
@@ -158,7 +86,6 @@ export default function NovelPage() {
     fetchChapters();
   }, [slug, chaptersPage, sortOrder]);
 
-  // Fetch comments
   useEffect(() => {
     if (!slug) return;
     const fetchComments = async () => {
@@ -166,15 +93,6 @@ export default function NovelPage() {
       try {
         const res = await commentService.getComments(slug, undefined, 1, 20);
         setComments(res.comments);
-        setCommentsStats(res.stats);
-        setUserReaction(res.stats.userReaction);
-        setReactionStats({
-          like: res.stats.like,
-          love: res.stats.love,
-          funny: res.stats.funny,
-          sad: res.stats.sad,
-          angry: res.stats.angry,
-        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -183,23 +101,6 @@ export default function NovelPage() {
     };
     fetchComments();
   }, [slug]);
-
-  const handleReaction = async (type: 'like' | 'love' | 'funny' | 'sad' | 'angry') => {
-    if (!slug) return;
-    try {
-      const result = await novelService.reactToNovel(slug, type);
-      setReactionStats({
-        like: result.like,
-        love: result.love,
-        funny: result.funny,
-        sad: result.sad,
-        angry: result.angry,
-      });
-      setUserReaction(result.userReaction);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleAddToFavorites = async () => {
     if (!slug || !novel) return;
@@ -237,12 +138,11 @@ export default function NovelPage() {
     }
   };
 
-  const handleAddComment = async () => {
-    if (!slug || !newComment.trim()) return;
+  const handleAddComment = async (content: string) => {
+    if (!slug) return;
     try {
-      const comment = await commentService.addComment(slug, newComment);
+      const comment = await commentService.addComment(slug, content);
       setComments([comment, ...comments]);
-      setNewComment('');
     } catch (err: any) {
       alert(err.message);
     }
@@ -262,7 +162,12 @@ export default function NovelPage() {
     ch.title.toLowerCase().includes(chapterSearch.toLowerCase())
   );
 
-  // Show skeleton loader while loading
+  const getStatusStyle = (status: string) => {
+    if (status === 'مستمرة') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+    if (status === 'مكتملة') return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+    return 'bg-red-500/20 text-red-300 border-red-500/30';
+  };
+
   if (loadingNovel) {
     return <NovelPageSkeleton />;
   }
@@ -280,7 +185,7 @@ export default function NovelPage() {
     <div className="relative min-h-screen bg-background text-foreground">
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
-      {/* Background with parallax effect */}
+      {/* Background */}
       <div className="fixed w-full h-screen z-0 top-0 left-0">
         <img
           alt="Background"
@@ -320,7 +225,7 @@ export default function NovelPage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => chapters.length > 0 && handleChapterClick(chapters[0])}
-                      className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground px-4 h-full w-full rounded bg-[#d61a4c] hover:bg-[#d61a4c]/80 flex justify-center content-center font-bold py-3"
+                      className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground px-4 h-full w-full rounded bg-white/20 backdrop-blur-sm text-black font-bold py-3 hover:bg-white/30"
                     >
                       اقرأ الفصل {chapters[0]?.number || '1'}
                     </motion.button>
@@ -330,20 +235,16 @@ export default function NovelPage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleAddToFavorites}
-                      className={`inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground px-4 py-2 select-none w-full rounded h-12 ${isFavorite ? 'bg-[#186ae6]/80' : 'bg-[#186ae6]'} hover:bg-[#186ae6]/80`}
+                      className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-black px-4 py-2 select-none w-full rounded h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30"
                     >
-                      <span className="text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="inline-block mx-1 size-4">
-                          <path fillRule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clipRule="evenodd"></path>
-                        </svg>
-                        <span className="font-normal">{isFavorite ? 'تمت الإضافة' : 'إضافة للمفضلة'}</span>
-                      </span>
+                      <Heart size={16} className={`ml-1 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                      {isFavorite ? 'تمت الإضافة' : 'إضافة للمفضلة'}
                     </motion.button>
                   </div>
                 </div>
               </div>
               <div className="flex-center pt-2">
-                <button className="justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 w-full rounded h-12 bg-neutral-700 hover:bg-neutral-600 text-white flex items-center gap-2">
+                <button className="justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 w-full rounded h-12 bg-white/20 backdrop-blur-sm text-black hover:bg-white/30 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flag w-5 h-5">
                     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
                     <line x1="4" x2="4" y1="22" y2="15"></line>
@@ -355,33 +256,32 @@ export default function NovelPage() {
 
             {/* Stats: Views & Favorites side by side */}
             <div className="grid grid-cols-2 gap-3 mt-2">
-              <div className="bg-[#29292966]/40 rounded-xl p-3 text-center border border-white/10">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10">
                 <Eye className="w-6 h-6 text-blue-400 mx-auto mb-1" />
-                <div className="text-2xl font-bold">{novel.views.toLocaleString('ar-EG')}</div>
+                <div className="text-2xl font-bold">{novel.views.toLocaleString('en-US')}</div>
                 <div className="text-xs text-gray-400">مشاهدة</div>
               </div>
-              <div className="bg-[#29292966]/40 rounded-xl p-3 text-center border border-white/10">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10">
                 <Heart className="w-6 h-6 text-pink-400 mx-auto mb-1" />
-                <div className="text-2xl font-bold">{novel.favorites.toLocaleString('ar-EG')}</div>
+                <div className="text-2xl font-bold">{novel.favorites.toLocaleString('en-US')}</div>
                 <div className="text-xs text-gray-400">مفضلة</div>
               </div>
             </div>
 
             <div className="h-px bg-white/10 my-2" />
 
-            <div className="text-foreground space-y-2">
-              {/* Status with divider */}
-              <div className="flex justify-between items-center py-2 border-b border-white/10">
-                <h1 className="font-semibold text-medium">الحالة</h1>
-                <div className="flex items-center">
-                  <span className={`h-2 w-2 rounded-full ${novel.status === 'مستمرة' ? 'bg-green-500' : 'bg-red-500'} mr-1`} />
-                  <p className="font-normal text-sm">{novel.status}</p>
-                </div>
+            <div className="text-foreground space-y-3">
+              {/* Status pill */}
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm font-medium text-gray-400">الحالة</span>
+                <span className={`px-3 py-1 rounded-md text-xs font-medium border ${getStatusStyle(novel.status)}`}>
+                  {novel.status}
+                </span>
               </div>
 
-              {/* Categories with divider */}
-              <div className="flex justify-between items-center py-2 border-b border-white/10">
-                <h1 className="font-semibold text-medium">التصنيفات</h1>
+              {/* Categories */}
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm font-medium text-gray-400">التصنيفات</span>
                 <div className="flex flex-wrap gap-1 justify-end">
                   {novel.tags?.slice(0, 3).map(tag => (
                     <span key={tag} className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary">
@@ -391,18 +291,16 @@ export default function NovelPage() {
                 </div>
               </div>
 
-              {/* Chapters count with divider */}
-              <div className="flex justify-between items-center py-2 border-b border-white/10">
-                <h1 className="font-semibold text-medium">الفصول</h1>
-                <p className="font-normal text-sm">{totalChapters}</p>
+              {/* Chapters count */}
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm font-medium text-gray-400">الفصول</span>
+                <span className="text-sm">{totalChapters}</span>
               </div>
 
-              {/* Last update with divider */}
-              <div className="flex justify-between items-center py-2 border-b border-white/10">
-                <h1 className="font-semibold text-medium">آخر تحديث</h1>
-                <p className="font-normal text-sm">
-                  {new Date(novel.lastChapterUpdate).toLocaleDateString('en-GB')}
-                </p>
+              {/* Last update */}
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm font-medium text-gray-400">آخر تحديث</span>
+                <span className="text-sm">{formatDate(novel.lastChapterUpdate)}</span>
               </div>
             </div>
           </div>
@@ -414,14 +312,14 @@ export default function NovelPage() {
               <div className="text-sm text-gray-400">بواسطة {novel.author}</div>
             </div>
 
-            {/* Small screen action buttons */}
+            {/* Small screen action buttons (same glass style) */}
             <div className="block lg:hidden md:hidden sm:hidden">
               <div className="flex flex-col gap-2">
                 <div className="grid grid-cols-2 gap-[.5rem] text-[.75rem] leading-4">
                   <div>
                     <button
                       onClick={() => chapters.length > 0 && handleChapterClick(chapters[0])}
-                      className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground px-4 h-full w-full rounded bg-[#d61a4c] hover:bg-[#d61a4c]/80 flex justify-center content-center font-bold py-3"
+                      className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-black px-4 h-full w-full rounded bg-white/20 backdrop-blur-sm font-bold py-3 hover:bg-white/30"
                     >
                       اقرأ الفصل {chapters[0]?.number || '1'}
                     </button>
@@ -429,14 +327,10 @@ export default function NovelPage() {
                   <div>
                     <button
                       onClick={handleAddToFavorites}
-                      className={`inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground px-4 py-2 select-none w-full rounded h-12 ${isFavorite ? 'bg-[#186ae6]/80' : 'bg-[#186ae6]'} hover:bg-[#186ae6]/80`}
+                      className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-black px-4 py-2 select-none w-full rounded h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30"
                     >
-                      <span className="text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="inline-block mx-1 size-4">
-                          <path fillRule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clipRule="evenodd"></path>
-                        </svg>
-                        <span className="font-normal">{isFavorite ? 'تمت الإضافة' : 'إضافة للمفضلة'}</span>
-                      </span>
+                      <Heart size={16} className={`ml-1 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                      {isFavorite ? 'تمت الإضافة' : 'إضافة للمفضلة'}
                     </button>
                   </div>
                 </div>
@@ -466,11 +360,11 @@ export default function NovelPage() {
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('views')}
-                className={`px-4 py-2 font-medium transition-colors relative ${activeTab === 'views' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setActiveTab('comments')}
+                className={`px-4 py-2 font-medium transition-colors relative ${activeTab === 'comments' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                المشاهدات
-                {activeTab === 'views' && (
+                التعليقات ({comments.length})
+                {activeTab === 'comments' && (
                   <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                 )}
               </button>
@@ -481,10 +375,7 @@ export default function NovelPage() {
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400">
-                      <circle cx="11" cy="11" r="8" />
-                      <path d="m21 21-4.3-4.3" />
-                    </svg>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
                       className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors"
@@ -506,47 +397,50 @@ export default function NovelPage() {
 
                 <div className="space-y-2">
                   {loadingChapters ? (
-                    // Skeleton for chapters
-                    <>
-                      <Skeleton className="h-16 rounded-xl" count={5} />
-                    </>
+                    <Skeleton className="h-16 rounded-xl" count={5} />
                   ) : filteredChapters.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">لا توجد فصول مطابقة</div>
                   ) : (
-                    filteredChapters.map((chapter, idx) => (
-                      <motion.div
+                    filteredChapters.map((chapter) => (
+                      <div
                         key={chapter._id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: idx * 0.02 }}
-                        whileHover={{ x: 4 }}
-                        className="flex items-center justify-between bg-white/5 hover:bg-white/10 rounded-xl p-3 cursor-pointer transition-all border border-white/5 hover:border-white/20"
                         onClick={() => handleChapterClick(chapter)}
+                        className="flex flex-1 bg-white/5 border border-white/10 hover:bg-white/10 relative rounded-lg p-2 sm:p-3 transition-colors cursor-pointer"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                            <span className="text-primary font-bold">{chapter.number}</span>
+                        <div className="w-full h-full flex items-center justify-between gap-2 sm:gap-3">
+                          <div className="flex w-full items-center text-left justify-between text-gray-900 dark:text-white min-w-0">
+                            <div className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] shrink-0 overflow-hidden rounded-md border border-white/10">
+                              <img
+                                alt={`الفصل ${chapter.number}`}
+                                loading="lazy"
+                                className="object-cover rounded-md absolute inset-0 w-full h-full"
+                                src={novel.cover}
+                              />
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
+                                <BookOpen className="text-white w-6 h-6" />
+                              </div>
+                            </div>
+                            <div className="flex w-full flex-col pr-2 sm:pr-[.875rem] ml-2 min-w-0">
+                              <div className="flex flex-row gap-1 items-center">
+                                <span className="text-xs sm:text-sm font-medium">الفصل {chapter.number}</span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:justify-start sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-400 mt-1">
+                                <time dateTime={chapter.createdAt}>{formatDate(chapter.createdAt)}</time>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-semibold">الفصل {chapter.number}</div>
-                            <div className="text-sm text-gray-400 line-clamp-1">{chapter.title}</div>
+                          <div className="last flex flex-row items-center justify-between gap-2 sm:gap-3 pr-2 sm:pr-4">
+                            <div className="flex items-center gap-1.5">
+                              <MessageCircle size={14} className="text-gray-500" />
+                              <p className="text-sm font-bold text-gray-400">0</p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Eye size={14} className="text-gray-500" />
+                              <p className="text-sm font-bold text-gray-400">{chapter.views}</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <MessageCircle size={14} />
-                            0
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye size={14} />
-                            {chapter.views}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar size={14} />
-                            {new Date(chapter.createdAt).toLocaleDateString('en-GB')}
-                          </span>
-                        </div>
-                      </motion.div>
+                      </div>
                     ))
                   )}
                 </div>
@@ -601,153 +495,24 @@ export default function NovelPage() {
               <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: novel.description }} />
             )}
 
-            {/* Views Tab */}
-            {activeTab === 'views' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                    <Eye className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-                    <div className="text-3xl font-bold">{novel.views.toLocaleString('ar-EG')}</div>
-                    <div className="text-gray-400 mt-1">إجمالي المشاهدات</div>
-                  </div>
-                  <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                    <div className="text-3xl font-bold">{totalChapters}</div>
-                    <div className="text-gray-400 mt-1">عدد الفصول</div>
-                  </div>
-                  <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                    <div className="text-3xl font-bold">{novel.favorites.toLocaleString('ar-EG')}</div>
-                    <div className="text-gray-400 mt-1">عدد المفضلات</div>
-                  </div>
-                </div>
-
-                {/* Reactions (optional) */}
-                <div className="mt-6">
-                  <h3 className="text-lg font-bold mb-4">تفاعلات الرواية</h3>
-                  <div className="flex flex-wrap justify-center gap-4">
-                    <button onClick={() => handleReaction('like')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'like' ? 'bg-blue-500/20' : 'hover:bg-white/5'}`}>
-                      <ThumbsUp className="w-8 h-8" />
-                      <span>{reactionStats.like}</span>
-                    </button>
-                    <button onClick={() => handleReaction('love')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'love' ? 'bg-red-500/20' : 'hover:bg-white/5'}`}>
-                      <Heart className="w-8 h-8 text-red-500" />
-                      <span>{reactionStats.love}</span>
-                    </button>
-                    <button onClick={() => handleReaction('funny')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'funny' ? 'bg-yellow-500/20' : 'hover:bg-white/5'}`}>
-                      <span className="text-2xl">😂</span>
-                      <span>{reactionStats.funny}</span>
-                    </button>
-                    <button onClick={() => handleReaction('sad')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'sad' ? 'bg-blue-500/20' : 'hover:bg-white/5'}`}>
-                      <span className="text-2xl">😢</span>
-                      <span>{reactionStats.sad}</span>
-                    </button>
-                    <button onClick={() => handleReaction('angry')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'angry' ? 'bg-red-500/20' : 'hover:bg-white/5'}`}>
-                      <span className="text-2xl">😠</span>
-                      <span>{reactionStats.angry}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Comments Section */}
-                <div>
-                  <h3 className="text-lg font-bold mb-4">التعليقات</h3>
-                  <div className="bg-muted/20 p-4 rounded-lg">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      className="w-full bg-background border border-border rounded-lg p-3 mb-2"
-                      rows={3}
-                      placeholder="أضف تعليقك..."
-                    />
-                    <button
-                      onClick={handleAddComment}
-                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
-                    >
-                      أضف تعليق
-                    </button>
-                  </div>
-                  <div className="mt-4 space-y-4">
-                    {loadingComments ? (
-                      <Skeleton className="h-24 rounded-xl" count={3} />
-                    ) : comments.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-8">لا توجد تعليقات بعد</div>
-                    ) : (
-                      comments.map(comment => (
-                        <div key={comment._id} className="bg-muted/10 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <img src={comment.user.picture || '/default-avatar.png'} alt={comment.user.name} className="w-8 h-8 rounded-full" />
-                            <span className="font-bold">{comment.user.name}</span>
-                            <span className="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
-                          </div>
-                          <p className="text-foreground">{comment.content}</p>
-                          <div className="flex gap-4 mt-2">
-                            <button className="text-xs text-muted-foreground hover:text-primary">رد</button>
-                            <button className="text-xs text-muted-foreground hover:text-primary">إعجاب</button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
+            {/* Comments Tab */}
+            {activeTab === 'comments' && (
+              <CommentSection
+                novelId={slug!}
+                comments={comments}
+                loading={loadingComments}
+                onAddComment={handleAddComment}
+              />
             )}
           </div>
         </div>
       </motion.section>
 
-      {/* Reader Modal */}
-      <AnimatePresence>
-        {showReader && selectedChapter && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 overflow-y-auto"
-            onClick={() => setShowReader(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="min-h-screen py-8 px-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="max-w-4xl mx-auto bg-[#0a0a0a] rounded-2xl shadow-2xl relative">
-                <button
-                  onClick={() => setShowReader(false)}
-                  className="absolute top-4 left-4 z-10 p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <div className="p-6 md:p-8">
-                  <h1 className="text-2xl font-bold mb-6 text-center">
-                    الفصل {selectedChapter.number}: {selectedChapter.title}
-                  </h1>
-                  <div
-                    className="chapter-content prose dark:prose-invert max-w-none leading-loose"
-                    style={{
-                      fontSize: selectedChapter.copyrightStyles?.fontSize || 18,
-                      textAlign: selectedChapter.copyrightStyles?.alignment === 'center' ? 'center' : 'right',
-                    }}
-                  >
-                    {selectedChapter.copyrightStart && (
-                      <div className="text-center text-gray-500 mb-6 pb-4 border-b border-white/10">
-                        {selectedChapter.copyrightStart}
-                      </div>
-                    )}
-                    <div dangerouslySetInnerHTML={{ __html: selectedChapter.content.replace(/\n/g, '<br/>') }} />
-                    {selectedChapter.copyrightEnd && (
-                      <div className="text-center text-gray-500 mt-6 pt-4 border-t border-white/10">
-                        {selectedChapter.copyrightEnd}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ChapterReader
+        chapter={selectedChapter}
+        isOpen={showReader}
+        onClose={() => setShowReader(false)}
+      />
     </div>
   );
 }

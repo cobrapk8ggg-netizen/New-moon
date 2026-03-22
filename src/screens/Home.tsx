@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // ✅ استيراد Link من react-router-dom
+import { Link } from 'react-router-dom';
 import { 
-  Home as HomeIcon, 
-  Library, 
-  Search, 
-  Sun, 
-  Moon, 
-  User, 
-  Menu, 
   TrendingUp,
-  ChevronLeft,
-  ChevronRight,
   Star,
   Clock,
   PlusCircle,
@@ -20,20 +11,15 @@ import {
 } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { motion, AnimatePresence } from 'motion/react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { motion } from 'motion/react';
+import Header from '../components/Header';
 
 // Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// ✅ إضافة slugs للروابط
+// بيانات ثابتة (نفس البيانات السابقة)
 const HERO_SLIDES = [
   {
     id: 1,
@@ -280,7 +266,6 @@ const LATEST_UPDATES = [
 
 export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -292,49 +277,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-500" dir="rtl" style={{ fontFamily: "'Cairo', sans-serif" }}>
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 w-full h-16 glass flex items-center justify-center px-4 md:px-8 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-7xl w-full flex items-center justify-between">
-          {/* Logo & Desktop Nav */}
-          <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2">
-              <img 
-                src="https://storage.azoramoon.com/public/upload/2025/12/24/c925c7f3-2310-4e90-9b62-7fae04fe1c36.webp" 
-                alt="Azora Logo" 
-                className="h-12 w-12 object-contain"
-              />
-            </Link>
-            
-            <div className="hidden md:flex items-center gap-6">
-              <NavLink icon={<HomeIcon size={20} />} label="الرئيسية" active />
-              <NavLink icon={<Library size={20} />} label="المكتبة" />
-              <NavLink icon={<User size={20} />} label="صفحتي" />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-              <Search size={20} />
-            </button>
-            <button 
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button className="p-2 hover:bg-white/10 rounded-full transition-colors hidden sm:block">
-              <User size={20} />
-            </button>
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors md:hidden"
-            >
-              <Menu size={20} />
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
       <main className="pb-12 bg-[#050505]">
         {/* Hero Slider */}
@@ -486,8 +429,6 @@ export default function Home() {
         {/* Latest Updates Section */}
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
-            
-            {/* Header / Tabs */}
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl md:text-[26px] font-bold text-white tracking-wide">آخر التحديثات</h2>
               
@@ -503,12 +444,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Grid layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               {LATEST_UPDATES.map((update) => (
                 <div key={update.id} className="bg-[#0c0c0c] rounded-xl border border-white/5 overflow-hidden flex h-[300px] hover:border-white/10 transition-colors">
-                  
-                  {/* Right Side: Image (First in RTL flex) */}
                   <Link to={`/novel/${update.slug}`} className="w-[42%] relative shrink-0 h-full block">
                     <img 
                       src={update.image} 
@@ -517,19 +455,16 @@ export default function Home() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#0c0c0c]/80" /> 
                     
-                    {/* Pink Badge */}
                     <div className="absolute top-0 right-0 bg-[#ff3b8d] text-white text-[12px] px-3 py-1.5 font-bold rounded-bl-xl shadow-md">
                       {update.type}
                     </div>
                     
-                    {/* Pinned Badge */}
                     {update.pinned && (
                       <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg border border-white/10">
                         Pinned <Pin size={12} className="rotate-45" />
                       </div>
                     )}
                     
-                    {/* Hot Icon */}
                     {update.isHot && (
                       <div className="absolute bottom-3 right-3 bg-[#ff3b8d] text-white p-2 rounded-full shadow-lg shadow-[#ff3b8d]/40">
                         <Flame size={16} className="fill-white" />
@@ -537,16 +472,13 @@ export default function Home() {
                     )}
                   </Link>
 
-                  {/* Left Side: Content Box */}
                   <div className="flex-1 p-4 flex flex-col relative z-10 w-[58%]" dir="ltr">
-                    
                     <Link to={`/novel/${update.slug}`} className="block">
                       <h3 className="text-white font-bold text-[17px] leading-snug line-clamp-2 mb-2 text-left hover:text-[#ff3b8d] transition-colors" dir="ltr">
                         {update.title}
                       </h3>
                     </Link>
                     
-                    {/* Status & Rating line */}
                     <div className="flex justify-between items-center mb-4 flex-row-reverse" dir="ltr">
                       <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-full bg-[#00e676] shadow-[0_0_8px_rgba(0,230,118,0.5)]"></div>
@@ -558,7 +490,6 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    {/* Chapters List */}
                     <div className="flex flex-col gap-2 flex-1 overflow-hidden" dir="rtl">
                       {update.chapters.map((chapter, index) => (
                         <div key={index} className="flex justify-between items-center bg-[#151515] hover:bg-[#1a1a1a] transition-colors rounded-lg px-3 py-2.5 border border-transparent hover:border-white/5 cursor-pointer">
@@ -574,69 +505,13 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-
                   </div>
-
                 </div>
               ))}
             </div>
           </div>
         </section>
       </main>
-
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, x: 300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 300 }}
-            className="fixed inset-0 z-[60] bg-[#0a0a0a] text-white md:hidden p-8 flex flex-col gap-8"
-          >
-            <div className="flex justify-between items-center">
-              <img 
-                src="https://storage.azoramoon.com/public/upload/2025/12/24/c925c7f3-2310-4e90-9b62-7fae04fe1c36.webp" 
-                alt="Logo" 
-                className="h-12"
-              />
-              <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
-                <ChevronRight size={32} />
-              </button>
-            </div>
-            
-            <div className="flex flex-col gap-0 mt-8 divide-y divide-white/10">
-              <MobileNavLink icon={<HomeIcon />} label="الرئيسية" />
-              <MobileNavLink icon={<Library />} label="المكتبة" />
-              <MobileNavLink icon={<User />} label="صفحتي" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
-  );
-}
-
-function NavLink({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <Link 
-      to="#" 
-      className={cn(
-        "relative flex items-center gap-2 pb-2 transition-all group",
-        active ? "text-white font-bold" : "text-gray-400 hover:text-white"
-      )}
-    >
-      <span className={active ? "text-white" : "text-gray-400 group-hover:text-white transition-colors"}>{icon}</span>
-      <span className="leading-none mt-1">{label}</span>
-      {active && <div className="absolute -bottom-5 left-0 right-0 h-1 bg-white rounded-t-full" />}
-    </Link>
-  );
-}
-
-function MobileNavLink({ icon, label }: { icon: React.ReactNode, label: string }) {
-  return (
-    <Link to="#" className="flex items-center gap-4 py-5 text-xl font-bold text-white hover:text-white/80 transition-colors border-b border-white/10 last:border-b-0">
-      <span className="text-white">{icon}</span>
-      {label}
-    </Link>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, Library, User, Search, Sun, Moon, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-// استيراد الصورة الجديدة من مجلد assets
+// استيراد الصورة من مجلد assets
 import logoImg from '../assets/AF32FFD4-DC2A-4D6A-9C05-F0A2E7288DC9.png';
 
 interface HeaderProps {
@@ -16,9 +16,9 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { path: '/', label: 'الرئيسية', icon: <HomeIcon size={20} /> },
-    { path: '/library', label: 'المكتبة', icon: <Library size={20} /> },
-    { path: '/my-page', label: 'صفحتي', icon: <User size={20} /> },
+    { path: '/', label: 'الرئيسية', icon: <HomeIcon size={18} /> },
+    { path: '/library', label: 'المكتبة', icon: <Library size={18} /> },
+    { path: '/my-page', label: 'صفحتي', icon: <User size={18} /> },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -26,30 +26,32 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
   return (
     <>
       <nav className="sticky top-0 z-50 w-full h-16 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/10 shadow-sm">
-        <div className="max-w-7xl mx-auto h-full px-4 md:px-8 flex items-center justify-between">
+        {/* تم تغيير justify-between إلى justify-start لجعل العناصر تبدأ من اليمين */}
+        <div className="max-w-7xl mx-auto h-full px-4 md:px-8 flex items-center justify-start gap-6">
+          
           {/* Logo Section */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center group">
             <img
               src={logoImg}
               alt="Qamar Logo"
-              /* تم تكبير الحجم هنا إلى h-16 ليكون بارزاً */
-              className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
+              /* تم تصغير الحجم إلى h-12 لجعلها متناسقة */
+              className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
             />
-            <span className="text-white font-bold text-xl tracking-tight hidden sm:block">
-              قمر الروايات
-            </span>
+            {/* تم حذف نص "قمر الروايات" من هنا */}
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8 h-full">
+          {/* Desktop Navigation - الآن بجانب الشعار مباشرة */}
+          {/* تم تغيير flex المنتصف إلى h-full و flex items-center لجعلها متناسقة عمودياً */}
+          <div className="hidden md:flex items-center gap-6 h-full">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className="relative flex items-center gap-2 h-full text-gray-300 hover:text-white transition-colors"
+                className="relative flex items-center gap-2 h-full text-gray-300 hover:text-white transition-colors group"
               >
-                <span className="text-current">{item.icon}</span>
-                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-current group-hover:text-white transition-colors">{item.icon}</span>
+                {/* تم تصغير حجم الخط قليلاً إلى text-xs */}
+                <span className="text-xs font-medium">{item.label}</span>
                 {isActive(item.path) && (
                   <motion.div
                     layoutId="activeUnderline"
@@ -61,22 +63,23 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          {/* Actions Section - ستبقى في اليسار الأقصى */}
+          {/* تم إضافة ms-auto لنقل هذا القسم إلى اليسار الأقصى */}
+          <div className="flex items-center gap-2 ms-auto">
             <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white">
-              <Search size={20} />
+              <Search size={18} />
             </button>
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white"
             >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <button
               onClick={() => setIsMenuOpen(true)}
               className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white md:hidden"
             >
-              <Menu size={20} />
+              <Menu size={18} />
             </button>
           </div>
         </div>
@@ -95,7 +98,7 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
               <img
                 src={logoImg}
                 alt="Logo"
-                className="h-20 w-auto object-contain"
+                className="h-16 w-auto object-contain"
               />
               <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-white/10 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right">

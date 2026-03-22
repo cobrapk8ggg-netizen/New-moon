@@ -25,7 +25,8 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 w-full h-16 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/10 shadow-sm">
+      {/* تم استخدام relative ليكون الهيدر غير ثابت في جميع الشاشات */}
+      <nav className="relative z-50 w-full h-16 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/10 shadow-sm">
         <div className="max-w-7xl mx-auto h-full px-4 md:px-8 flex items-center justify-start gap-6">
           
           {/* Logo Section */}
@@ -37,7 +38,7 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
             />
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - محاذاة لليمين بجانب الشعار */}
           <div className="hidden md:flex items-center gap-6 h-full">
             {navItems.map((item) => (
               <Link
@@ -51,7 +52,7 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
                 {isActive(item.path) && (
                   <motion.div
                     layoutId="activeUnderline"
-                    /* تم تغيير bottom-0 إلى bottom-3 لرفع الخط وتقريبه من الكلمة */
+                    /* الخط الأبيض قريب من الكلمة بفضل bottom-3 */
                     className="absolute bottom-3 left-0 right-0 h-0.5 bg-white rounded-full"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
@@ -60,7 +61,7 @@ export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
             ))}
           </div>
 
-          {/* Actions Section */}
+          {/* Actions Section - مدفوعة لأقصى اليسار */}
           <div className="flex items-center gap-2 ms-auto">
             <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white">
               <Search size={18} />

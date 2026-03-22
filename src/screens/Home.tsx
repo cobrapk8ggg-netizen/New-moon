@@ -1,39 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { motion } from 'motion/react';
-import { TrendingUp, PlusCircle, Clock, Flame, Star, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { TrendingUp, PlusCircle, Clock, Flame, Star, ChevronLeft, ChevronRight, Pin, BookOpen } from 'lucide-react';
 import Header from '../components/Header';
 import { novelService, Novel } from '../services/novel';
-
-// Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 // Skeleton Loader Component
 const NovelCardSkeleton = () => (
-  <div className="animate-pulse">
+  <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="animate-pulse"
+  >
     <div className="aspect-[2/3] bg-gray-800 rounded-xl" />
     <div className="mt-3 space-y-2">
       <div className="h-4 bg-gray-800 rounded w-3/4" />
       <div className="h-3 bg-gray-800 rounded w-1/2" />
     </div>
-  </div>
+  </motion.div>
 );
 
-// Novel Card Component (reusable)
-const NovelCard = ({ novel }: { novel: Novel }) => (
+// Novel Card Component
+const NovelCard = ({ novel, index }: { novel: Novel; index: number }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 50 }}
     whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4 }}
-    viewport={{ once: true }}
+    transition={{ duration: 0.5, delay: index * 0.05 }}
+    viewport={{ once: true, margin: "-50px" }}
+    whileHover={{ y: -8 }}
     className="group cursor-pointer"
   >
     <Link to={`/novel/${novel._id}`} className="block">
-      <div className="relative overflow-hidden rounded-xl shadow-lg transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl">
+      <div className="relative overflow-hidden rounded-xl shadow-lg transform transition-all duration-500 group-hover:shadow-2xl">
         <div className="aspect-[2/3]">
           <img
             src={novel.cover}
@@ -41,7 +45,11 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileHover={{ opacity: 1 }}
+          className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent flex flex-col justify-end p-4"
+        >
           <h3 className="text-white font-bold text-sm line-clamp-2 mb-2 text-center drop-shadow-md">
             {novel.title}
           </h3>
@@ -49,7 +57,7 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
             <Star size={12} className="fill-yellow-400 text-yellow-400" />
             {novel.rating}
           </div>
-        </div>
+        </motion.div>
       </div>
       <div className="mt-3 px-1">
         <h3 className="text-sm font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
@@ -65,66 +73,61 @@ const NovelCard = ({ novel }: { novel: Novel }) => (
   </motion.div>
 );
 
-// Main Component
+const heroSlides = [
+  {
+    id: 1,
+    title: 'The Substitute Bride Is Doted on by the Cold-Blooded Emperor',
+    image: 'https://storage.azoramoon.com/public/upload/2026/02/21/3d193696-84b3-46b8-91d4-a80e698ed920.webp',
+    slug: 'the-substitute-bride-is-doted-on-by-the-cold-blooded-emperor',
+    tags: ['انتقام', 'رومانسي', 'خيال'],
+    status: 'جديد',
+    statusIcon: '👋',
+  },
+  {
+    id: 2,
+    title: 'Once an Assassin, Now a Royal Nanny',
+    image: 'https://storage.azoramoon.com/public/upload/2026/03/20/12c4fba7-71bf-4242-94fc-a8a7ba640189.webp',
+    slug: 'once-an-assassin-now-a-royal-nanny',
+    tags: ['خيال', 'رومانسي', 'تناسخ'],
+    status: 'جديد',
+    statusIcon: '👋',
+  },
+  {
+    id: 3,
+    title: 'Vengeance Begins with Marriage',
+    image: 'https://storage.azoramoon.com/public/upload/2026/03/19/71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp',
+    slug: 'vengeance-begins-with-marriage',
+    tags: ['دراما', 'رومانسي'],
+    status: 'رائج',
+    statusIcon: '🔥',
+  },
+];
+
 export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [trendingNovels, setTrendingNovels] = useState<Novel[]>([]);
-  const [recentNovels, setRecentNovels] = useState<Novel[]>([]);
-  const [latestUpdates, setLatestUpdates] = useState<Novel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Hero Slider Data (still static, but can be replaced by API)
-  const heroSlides = [
-    {
-      id: 1,
-      title: 'The Substitute Bride Is Doted on by the Cold-Blooded Emperor',
-      image: 'https://storage.azoramoon.com/public/upload/2026/02/21/3d193696-84b3-46b8-91d4-a80e698ed920.webp',
-      slug: 'the-substitute-bride-is-doted-on-by-the-cold-blooded-emperor',
-      tags: ['انتقام', 'رومانسي', 'خيال'],
-      status: 'جديد',
-      statusIcon: '👋',
-    },
-    {
-      id: 2,
-      title: 'Once an Assassin, Now a Royal Nanny',
-      image: 'https://storage.azoramoon.com/public/upload/2026/03/20/12c4fba7-71bf-4242-94fc-a8a7ba640189.webp',
-      slug: 'once-an-assassin-now-a-royal-nanny',
-      tags: ['خيال', 'رومانسي', 'تناسخ'],
-      status: 'جديد',
-      statusIcon: '👋',
-    },
-    {
-      id: 3,
-      title: 'Vengeance Begins with Marriage',
-      image: 'https://storage.azoramoon.com/public/upload/2026/03/19/71666fa0-54f3-4b4b-aea5-a5ca55e52fe7.webp',
-      slug: 'vengeance-begins-with-marriage',
-      tags: ['دراما', 'رومانسي'],
-      status: 'رائج',
-      statusIcon: '🔥',
-    },
-  ];
+  // استخدام React Query لمنع إعادة الطلب عند العودة للصفحة
+  const { data: trendingData, isLoading: trendingLoading } = useQuery({
+    queryKey: ['novels', 'trending'],
+    queryFn: () => novelService.getNovels({ filter: 'trending', timeRange: 'week', limit: 12 }),
+    staleTime: 5 * 60 * 1000, // 5 دقائق
+    gcTime: 10 * 60 * 1000, // 10 دقائق
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [trending, recent, updates] = await Promise.all([
-          novelService.getNovels({ filter: 'trending', timeRange: 'week', limit: 12 }),
-          novelService.getNovels({ filter: 'latest_added', limit: 12 }),
-          novelService.getNovels({ filter: 'latest_updates', limit: 8 }),
-        ]);
-        setTrendingNovels(trending.novels);
-        setRecentNovels(recent.novels);
-        setLatestUpdates(updates.novels);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: recentData, isLoading: recentLoading } = useQuery({
+    queryKey: ['novels', 'recent'],
+    queryFn: () => novelService.getNovels({ filter: 'latest_added', limit: 12 }),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const { data: updatesData, isLoading: updatesLoading } = useQuery({
+    queryKey: ['novels', 'updates'],
+    queryFn: () => novelService.getNovels({ filter: 'latest_updates', limit: 8 }),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     if (isDarkMode) {
@@ -134,16 +137,10 @@ export default function Home() {
     }
   }, [isDarkMode]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background text-foreground" dir="rtl">
-        <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-        <div className="flex items-center justify-center h-64 text-red-500">
-          خطأ: {error}
-        </div>
-      </div>
-    );
-  }
+  const trendingNovels = trendingData?.novels || [];
+  const recentNovels = recentData?.novels || [];
+  const latestUpdates = updatesData?.novels || [];
+  const isLoading = trendingLoading || recentLoading || updatesLoading;
 
   return (
     <div
@@ -154,19 +151,24 @@ export default function Home() {
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
       <main className="pb-16">
-        {/* Hero Slider */}
+        {/* Hero Slider with Animation */}
         <section className="h-[430px] w-full overflow-hidden">
           <Swiper
             modules={[Autoplay, Pagination, Navigation]}
-            autoplay={{ delay: 5000 }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
             pagination={{ clickable: true }}
             loop
             className="h-full w-full"
           >
-            {heroSlides.map((slide) => (
+            {heroSlides.map((slide, index) => (
               <SwiperSlide key={slide.id}>
-                <Link to={`/novel/${slide.slug}`} className="block h-full w-full">
-                  <div className="relative h-full w-full group">
+                <motion.div
+                  initial={{ scale: 1.1, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.8 }}
+                  className="relative h-full w-full"
+                >
+                  <Link to={`/novel/${slide.slug}`} className="block h-full w-full">
                     <img
                       src={slide.image}
                       alt={slide.title}
@@ -175,18 +177,33 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                     <div className="absolute bottom-12 left-0 right-0 px-6 text-center z-10">
                       <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
                         className="flex flex-col items-center gap-3"
                       >
-                        <span className="px-3 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-teal-400 text-black text-xs font-bold flex items-center gap-1">
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: 'spring', delay: 0.4 }}
+                          className="px-3 py-1 rounded-full bg-gradient-to-r from-cyan-400 to-teal-400 text-black text-xs font-bold flex items-center gap-1"
+                        >
                           {slide.statusIcon} {slide.status}
-                        </span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg max-w-3xl">
+                        </motion.span>
+                        <motion.h2
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.3 }}
+                          className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg max-w-3xl"
+                        >
                           {slide.title}
-                        </h2>
-                        <div className="flex flex-wrap justify-center gap-2">
+                        </motion.h2>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.5, delay: 0.5 }}
+                          className="flex flex-wrap justify-center gap-2"
+                        >
                           {slide.tags.map((tag) => (
                             <span
                               key={tag}
@@ -195,23 +212,28 @@ export default function Home() {
                               {tag}
                             </span>
                           ))}
-                        </div>
+                        </motion.div>
                       </motion.div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </motion.div>
               </SwiperSlide>
             ))}
           </Swiper>
         </section>
 
-        {/* Section: Recently Added (المضافة حديثاً) */}
+        {/* Section: Recently Added */}
         <section className="px-4 md:px-8 mt-12">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 mb-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-2 mb-6"
+            >
               <PlusCircle size={24} className="text-green-500" />
               <h2 className="text-xl font-bold">أضيف حديثاً</h2>
-            </div>
+            </motion.div>
             <Swiper
               modules={[Navigation]}
               spaceBetween={16}
@@ -224,28 +246,33 @@ export default function Home() {
               }}
               className="py-4"
             >
-              {loading
+              {isLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
                     <SwiperSlide key={i}>
                       <NovelCardSkeleton />
                     </SwiperSlide>
                   ))
-                : recentNovels.map((novel) => (
+                : recentNovels.map((novel, i) => (
                     <SwiperSlide key={novel._id}>
-                      <NovelCard novel={novel} />
+                      <NovelCard novel={novel} index={i} />
                     </SwiperSlide>
                   ))}
             </Swiper>
           </div>
         </section>
 
-        {/* Section: Most Read (الأكثر قراءة) */}
+        {/* Section: Most Read */}
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 mb-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="flex items-center gap-2 mb-6"
+            >
               <TrendingUp size={24} className="text-orange-500" />
               <h2 className="text-xl font-bold">الأكثر قراءة</h2>
-            </div>
+            </motion.div>
             <Swiper
               modules={[Navigation]}
               spaceBetween={16}
@@ -258,25 +285,30 @@ export default function Home() {
               }}
               className="py-4"
             >
-              {loading
+              {isLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
                     <SwiperSlide key={i}>
                       <NovelCardSkeleton />
                     </SwiperSlide>
                   ))
-                : trendingNovels.map((novel) => (
+                : trendingNovels.map((novel, i) => (
                     <SwiperSlide key={novel._id}>
-                      <NovelCard novel={novel} />
+                      <NovelCard novel={novel} index={i} />
                     </SwiperSlide>
                   ))}
             </Swiper>
           </div>
         </section>
 
-        {/* Section: Latest Updates (آخر التحديثات) */}
+        {/* Section: Latest Updates */}
         <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center justify-between mb-8"
+            >
               <h2 className="text-2xl md:text-[26px] font-bold">آخر التحديثات</h2>
               <div className="flex items-center bg-[#111111] rounded-full p-1 border border-white/5">
                 <button className="flex items-center gap-2 text-gray-500 hover:text-gray-300 px-4 md:px-5 py-2 rounded-full transition-colors text-sm font-bold">
@@ -288,10 +320,10 @@ export default function Home() {
                   رائج
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-              {loading
+              {isLoading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
@@ -308,10 +340,14 @@ export default function Home() {
                       </div>
                     </div>
                   ))
-                : latestUpdates.map((novel) => (
-                    <div
+                : latestUpdates.map((novel, index) => (
+                    <motion.div
                       key={novel._id}
-                      className="bg-[#0c0c0c] rounded-xl border border-white/5 overflow-hidden flex h-[300px] hover:border-white/10 transition-all duration-300"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ y: -4 }}
+                      className="bg-[#0c0c0c] rounded-xl border border-white/5 overflow-hidden flex h-[300px] hover:border-white/10 hover:shadow-xl transition-all duration-300"
                     >
                       <Link
                         to={`/novel/${novel._id}`}
@@ -323,9 +359,6 @@ export default function Home() {
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#0c0c0c]/80" />
-                        <div className="absolute top-0 right-0 bg-[#ff3b8d] text-white text-[12px] px-3 py-1.5 font-bold rounded-bl-xl shadow-md">
-                          رواية
-                        </div>
                         {novel.status === 'مستمرة' && (
                           <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-white text-[11px] px-2 py-1.5 rounded-md flex items-center gap-1.5 shadow-lg border border-white/10">
                             مستمر <Pin size={12} className="rotate-45" />
@@ -356,14 +389,11 @@ export default function Home() {
                           {novel.chapters?.slice(0, 5).map((chapter) => (
                             <div
                               key={chapter._id}
-                              className="flex justify-between items-center bg-[#151515] hover:bg-[#1a1a1a] transition-colors rounded-lg px-3 py-2.5 border border-transparent hover:border-white/5 cursor-pointer"
+                              className="flex justify-between items-center bg-[#151515] hover:bg-[#1a1a1a] transition-colors rounded-lg px-3 py-2.5 border border-transparent hover:border-white/5"
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-bold text-gray-200">
-                                  الفصل {chapter.number}
-                                </span>
-                                {/* Lock icon can be added conditionally */}
-                              </div>
+                              <span className="text-[13px] font-bold text-gray-200">
+                                الفصل {chapter.number}
+                              </span>
                               <span className="text-[11px] font-bold text-gray-500">
                                 {new Date(chapter.createdAt).toLocaleDateString('ar-EG')}
                               </span>
@@ -376,7 +406,7 @@ export default function Home() {
                           )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
             </div>
           </div>

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, Settings, List, MessageCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, List, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useChapterData } from './hooks/useChapterData';
 import { useReaderSettings } from './hooks/useReaderSettings';

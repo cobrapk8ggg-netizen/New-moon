@@ -1,3 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Azora Moon - الصفحة الرئيسية</title>
+    <!-- Import Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CDN (for build, but we rely on existing classes) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom overrides to ensure Cairo font is applied */
+        body, * {
+            font-family: 'Cairo', sans-serif !important;
+        }
+        /* Additional style for better borders */
+        .mobile-menu-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .mobile-menu-item:last-child {
+            border-bottom: none;
+        }
+        /* For swiper custom styles if needed */
+        .popular-swiper .swiper-button-next,
+        .popular-swiper .swiper-button-prev {
+            color: white;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+        }
+        .popular-swiper .swiper-button-next:after,
+        .popular-swiper .swiper-button-prev:after {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- The React code is embedded below; we'll provide the complete component file -->
+<script type="text/javascript">
+// We'll output the full App component with the requested changes.
+// Note: In a real environment, this would be a .jsx file. Here it's a code block to copy.
+// The user expects the full code to replace the existing App.jsx/component.
+</script>
+
+<!-- START OF THE FULL COMPONENT CODE -->
+<!-- Paste this entire code into your App.jsx (or equivalent) file. -->
+<pre style="display:none;">
+```jsx
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -268,7 +319,7 @@ export default function App() {
   }, [isDarkMode]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-500 font-sans" dir="rtl" style={{ fontFamily: "'Noto Sans Arabic', 'Tajawal', sans-serif" }}>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-500" dir="rtl" style={{ fontFamily: "'Cairo', sans-serif" }}>
       {/* Navbar */}
       <nav className="sticky top-0 z-50 w-full h-16 glass flex items-center justify-center px-4 md:px-8 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl w-full flex items-center justify-between">
@@ -412,13 +463,59 @@ export default function App() {
           </div>
         </section>
 
-        {/* Latest Updates Section (EXACT MATCH REBUILD) */}
-        <section className="px-4 md:px-8 mt-6">
+        {/* Recently Added Section - Moved to be directly under Most Read */}
+        <section className="px-4 md:px-8 mt-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-2 mb-6 text-white">
+              <PlusCircle size={24} className="text-green-500" />
+              <h2 className="text-xl font-bold">أضيف حديثاً</h2>
+            </div>
+
+            <Swiper
+              modules={[Navigation]}
+              spaceBetween={16}
+              slidesPerView={2}
+              navigation
+              breakpoints={{
+                640: { slidesPerView: 3 },
+                768: { slidesPerView: 4 },
+                1024: { slidesPerView: 6 },
+              }}
+              className="popular-swiper py-8"
+            >
+              {RECENTLY_ADDED_MANGA.map((manga) => (
+                <SwiperSlide key={manga.id} className="pb-6 px-1">
+                  <div className="relative w-full aspect-[2/3] group perspective-[1000px] cursor-pointer">
+                    <div className="w-full h-full relative transition-all duration-500 ease-out transform-style-3d group-hover:[transform:rotateX(15deg)_translateY(-8px)] origin-bottom shadow-md group-hover:shadow-2xl rounded-xl overflow-hidden border border-white/5">
+                      <img 
+                        src={manga.image} 
+                        alt={manga.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 translate-y-4 group-hover:translate-y-0">
+                        <h3 className="text-white font-bold text-sm line-clamp-2 mb-3 text-center drop-shadow-md">
+                          {manga.title}
+                        </h3>
+                        <div className="flex justify-center items-center gap-1 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs text-white mx-auto w-fit">
+                          <Star size={12} className="fill-orange-400 text-orange-400" />
+                          {manga.rating}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </section>
+
+        {/* Latest Updates Section - Now placed last */}
+        <section className="px-4 md:px-8 mt-16">
           <div className="max-w-7xl mx-auto">
             
             {/* Header / Tabs */}
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl md:text-[26px] font-bold text-white tracking-wide">أحدث الإصدارات</h2>
+              <h2 className="text-2xl md:text-[26px] font-bold text-white tracking-wide">آخر التحديثات</h2>
               
               <div className="flex items-center bg-[#111111] rounded-full p-1 border border-white/5">
                 <button className="flex items-center gap-2 text-gray-500 hover:text-gray-300 px-4 md:px-5 py-2 rounded-full transition-colors text-sm font-bold">
@@ -509,55 +606,9 @@ export default function App() {
             </div>
           </div>
         </section>
-
-        {/* Recently Added Section */}
-        <section className="px-4 md:px-8 mt-16 mb-12">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 mb-6 text-white">
-              <PlusCircle size={24} className="text-green-500" />
-              <h2 className="text-xl font-bold">أضيف حديثاً</h2>
-            </div>
-
-            <Swiper
-              modules={[Navigation]}
-              spaceBetween={16}
-              slidesPerView={2}
-              navigation
-              breakpoints={{
-                640: { slidesPerView: 3 },
-                768: { slidesPerView: 4 },
-                1024: { slidesPerView: 6 },
-              }}
-              className="popular-swiper py-8"
-            >
-              {RECENTLY_ADDED_MANGA.map((manga) => (
-                <SwiperSlide key={manga.id} className="pb-6 px-1">
-                  <div className="relative w-full aspect-[2/3] group perspective-[1000px] cursor-pointer">
-                    <div className="w-full h-full relative transition-all duration-500 ease-out transform-style-3d group-hover:[transform:rotateX(15deg)_translateY(-8px)] origin-bottom shadow-md group-hover:shadow-2xl rounded-xl overflow-hidden border border-white/5">
-                      <img 
-                        src={manga.image} 
-                        alt={manga.title} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 translate-y-4 group-hover:translate-y-0">
-                        <h3 className="text-white font-bold text-sm line-clamp-2 mb-3 text-center drop-shadow-md">
-                          {manga.title}
-                        </h3>
-                        <div className="flex justify-center items-center gap-1 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs text-white mx-auto w-fit">
-                          <Star size={12} className="fill-orange-400 text-orange-400" />
-                          {manga.rating}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        </section>
       </main>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - Colors changed to white, added separators */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div 
@@ -577,7 +628,7 @@ export default function App() {
               </button>
             </div>
             
-            <div className="flex flex-col gap-6 mt-8">
+            <div className="flex flex-col gap-0 mt-8 divide-y divide-white/10">
               <MobileNavLink icon={<Home />} label="الرئيسية" />
               <MobileNavLink icon={<Library />} label="المكتبة" />
               <MobileNavLink icon={<User />} label="صفحتي" />
@@ -598,17 +649,17 @@ function NavLink({ icon, label, active = false }: { icon: React.ReactNode, label
         active ? "text-white font-bold" : "text-gray-400 hover:text-white"
       )}
     >
-      <span className={active ? "text-[#ff3b8d]" : "text-gray-400 group-hover:text-[#ff3b8d] transition-colors"}>{icon}</span>
+      <span className={active ? "text-white" : "text-gray-400 group-hover:text-white transition-colors"}>{icon}</span>
       <span className="leading-none mt-1">{label}</span>
-      {active && <div className="absolute -bottom-5 left-0 right-0 h-1 bg-[#ff3b8d] rounded-t-full" />}
+      {active && <div className="absolute -bottom-5 left-0 right-0 h-1 bg-white rounded-t-full" />}
     </a>
   );
 }
 
 function MobileNavLink({ icon, label }: { icon: React.ReactNode, label: string }) {
   return (
-    <a href="#" className="flex items-center gap-4 text-xl font-bold text-gray-300 hover:text-[#ff3b8d] transition-colors">
-      <span className="text-[#ff3b8d]">{icon}</span>
+    <a href="#" className="flex items-center gap-4 py-5 text-xl font-bold text-white hover:text-white/80 transition-colors border-b border-white/10 last:border-b-0">
+      <span className="text-white">{icon}</span>
       {label}
     </a>
   );

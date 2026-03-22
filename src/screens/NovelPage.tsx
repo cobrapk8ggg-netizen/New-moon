@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
@@ -13,6 +13,7 @@ import { PageSelectorModal } from '../components/PageSelectorModal';
 
 export default function NovelPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [novel, setNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<ChapterMeta[]>([]);
@@ -157,22 +158,8 @@ export default function NovelPage() {
 
   const handleChapterClick = async (chapter: ChapterMeta) => {
     if (!slug) return;
-    try {
-      const full = await novelService.getChapter(slug, chapter._id);
-      setSelectedChapter(full);
-      setShowReader(true);
-      if (userProgress.readChapters.indexOf(chapter.number) === -1) {
-        const newRead = [...userProgress.readChapters, chapter.number];
-        setUserProgress(prev => ({ ...prev, readChapters: newRead, lastChapterId: chapter.number }));
-        await novelService.updateReadingStatus({
-          novelId: slug,
-          lastChapterId: chapter.number,
-          lastChapterTitle: full.title,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    // الانتقال إلى صفحة القارئ بدلاً من فتح النافذة المنبثقة
+    navigate(`/novel/${slug}/reader/${chapter.number}`);
   };
 
   const handleAddComment = async (content: string) => {

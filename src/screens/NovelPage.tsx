@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import Header from '../components/Header';
 import { novelService, Novel, ChapterMeta, ChapterFull } from '../services/novel';
 import { commentService, Comment, CommentStats } from '../services/comment';
-import { Star, ChevronLeft, ChevronRight, Heart, ThumbsUp, ThumbsDown, ArrowUpDown, Eye, BookOpen, X, Calendar } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, Heart, ThumbsUp, ThumbsDown, ArrowUpDown, Eye, BookOpen, X, Calendar, MessageCircle } from 'lucide-react';
+import { Skeleton, NovelPageSkeleton } from '../components/Skeleton';
 
-// Modal component for page selection
+// Modal for page selection (same as before)
 const PageSelectorModal = ({ isOpen, onClose, totalPages, currentPage, onSelectPage }: {
   isOpen: boolean;
   onClose: () => void;
@@ -88,7 +89,7 @@ export default function NovelPage() {
   const [chapters, setChapters] = useState<ChapterMeta[]>([]);
   const [chaptersPage, setChaptersPage] = useState(1);
   const [totalChapters, setTotalChapters] = useState(0);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc'); // new sort state
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [loadingNovel, setLoadingNovel] = useState(true);
   const [loadingChapters, setLoadingChapters] = useState(false);
   const [activeTab, setActiveTab] = useState<'chapters' | 'description' | 'views'>('chapters');
@@ -112,6 +113,7 @@ export default function NovelPage() {
   const chaptersPerPage = 25;
   const totalPages = Math.ceil(totalChapters / chaptersPerPage);
 
+  // Fetch novel data
   useEffect(() => {
     if (!slug) return;
     const fetchNovel = async () => {
@@ -139,6 +141,7 @@ export default function NovelPage() {
     fetchNovel();
   }, [slug]);
 
+  // Fetch chapters with pagination and sort
   useEffect(() => {
     if (!slug) return;
     const fetchChapters = async () => {
@@ -155,6 +158,7 @@ export default function NovelPage() {
     fetchChapters();
   }, [slug, chaptersPage, sortOrder]);
 
+  // Fetch comments
   useEffect(() => {
     if (!slug) return;
     const fetchComments = async () => {
@@ -258,11 +262,16 @@ export default function NovelPage() {
     ch.title.toLowerCase().includes(chapterSearch.toLowerCase())
   );
 
-  if (loadingNovel || !novel) {
+  // Show skeleton loader while loading
+  if (loadingNovel) {
+    return <NovelPageSkeleton />;
+  }
+
+  if (!novel) {
     return (
       <div className="min-h-screen bg-background text-foreground" dir="rtl">
         <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-        <div className="flex items-center justify-center h-64">جاري التحميل...</div>
+        <div className="flex items-center justify-center h-64">الرواية غير موجودة</div>
       </div>
     );
   }
@@ -271,7 +280,7 @@ export default function NovelPage() {
     <div className="relative min-h-screen bg-background text-foreground">
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
-      {/* Background */}
+      {/* Background with parallax effect */}
       <div className="fixed w-full h-screen z-0 top-0 left-0">
         <img
           alt="Background"
@@ -344,91 +353,56 @@ export default function NovelPage() {
               </div>
             </div>
 
-            <div className="flex-center gap-3">
-              <li className="bg-[#29292966]/40 w-full h-14 flex items-center justify-center gap-2 rounded">
-                <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm leading-4">{novel.rating}</span>
-                  <small className="text-[10px] leading-3">التقييمات</small>
-                </div>
-              </li>
-              <div data-orientation="vertical" role="none" className="shrink-0 !bg-[#ffffff1f] w-[1px] h-[50%]"></div>
-              <li className="bg-[#29292966]/40 w-full h-14 flex items-center justify-center gap-2 rounded">
-                <Heart className="w-6 h-6 text-[#22d3ee]" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm leading-4">{novel.favorites}</span>
-                  <small className="text-[10px] leading-3">المفضلة</small>
-                </div>
-              </li>
+            {/* Stats: Views & Favorites side by side */}
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div className="bg-[#29292966]/40 rounded-xl p-3 text-center border border-white/10">
+                <Eye className="w-6 h-6 text-blue-400 mx-auto mb-1" />
+                <div className="text-2xl font-bold">{novel.views.toLocaleString('ar-EG')}</div>
+                <div className="text-xs text-gray-400">مشاهدة</div>
+              </div>
+              <div className="bg-[#29292966]/40 rounded-xl p-3 text-center border border-white/10">
+                <Heart className="w-6 h-6 text-pink-400 mx-auto mb-1" />
+                <div className="text-2xl font-bold">{novel.favorites.toLocaleString('ar-EG')}</div>
+                <div className="text-xs text-gray-400">مفضلة</div>
+              </div>
             </div>
 
-            <div data-orientation="horizontal" role="none" className="shrink-0 !bg-[#ffffff1f] h-[1px] w-full"></div>
+            <div className="h-px bg-white/10 my-2" />
 
-            <div className="text-foreground">
-              <div className="flex sm:justify-between justify-start items-center gap-2">
-                <h1 className="font-semibold text-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-dna inline-block mx-1">
-                    <path d="M2 15c6.667-6 13.333 0 20-6"></path>
-                    <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"></path>
-                    <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"></path>
-                    <path d="m17 6-2.5-2.5"></path>
-                    <path d="m14 8-1-1"></path>
-                    <path d="m7 18 2.5 2.5"></path>
-                    <path d="m3.5 14.5.5.5"></path>
-                    <path d="m20 9 .5.5"></path>
-                    <path d="m6.5 12.5 1 1"></path>
-                    <path d="m16.5 10.5 1 1"></path>
-                    <path d="m10 16 1.5 1.5"></path>
-                  </svg>
-                  الحالة
-                </h1>
+            <div className="text-foreground space-y-2">
+              {/* Status with divider */}
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <h1 className="font-semibold text-medium">الحالة</h1>
                 <div className="flex items-center">
-                  <span className={`h-[10px] w-[10px] mx-1 rounded-full inline-block relative ${novel.status === 'مستمرة' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  <p className="font-normal text-xs inline ml-1 text-foreground">{novel.status}</p>
+                  <span className={`h-2 w-2 rounded-full ${novel.status === 'مستمرة' ? 'bg-green-500' : 'bg-red-500'} mr-1`} />
+                  <p className="font-normal text-sm">{novel.status}</p>
                 </div>
               </div>
-              <div className="flex sm:justify-between justify-start items-center gap-2">
-                <h1 className="font-semibold text-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tags inline-block mx-1">
-                    <path d="M7.2 1.6a2.2 2.2 0 0 1 3.1 0l12.1 12.1a2.2 2.2 0 0 1 0 3.1L15 24.5 2.5 12 7.2 1.6z"></path>
-                    <path d="M9 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"></path>
-                  </svg>
-                  التصنيفات
-                </h1>
-                <div className="flex flex-wrap gap-1">
+
+              {/* Categories with divider */}
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <h1 className="font-semibold text-medium">التصنيفات</h1>
+                <div className="flex flex-wrap gap-1 justify-end">
                   {novel.tags?.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-2 py-1 rounded-[4px] text-xs font-medium inline-block border text-foreground bg-background/10 border-foreground/20">
+                    <span key={tag} className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary">
                       {tag}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="flex sm:justify-between justify-start items-center gap-2">
-                <h1 className="font-semibold text-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-book inline-block mx-1">
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
-                  </svg>
-                  الفصول
-                </h1>
-                <div className="inline">
-                  <p className="font-normal text-xs inline ml-1 text-foreground">{totalChapters}</p>
-                </div>
+
+              {/* Chapters count with divider */}
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <h1 className="font-semibold text-medium">الفصول</h1>
+                <p className="font-normal text-sm">{totalChapters}</p>
               </div>
-              <div className="flex sm:justify-between justify-start items-center gap-2">
-                <h1 className="font-semibold text-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar inline-block mx-1">
-                    <path d="M8 2v4"></path>
-                    <path d="M16 2v4"></path>
-                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                    <path d="M3 10h18"></path>
-                  </svg>
-                  آخر تحديث
-                </h1>
-                <div className="inline">
-                  <p className="font-normal text-xs inline ml-1 text-foreground">
-                    {new Date(novel.lastChapterUpdate).toLocaleDateString('en-GB')}
-                  </p>
-                </div>
+
+              {/* Last update with divider */}
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <h1 className="font-semibold text-medium">آخر تحديث</h1>
+                <p className="font-normal text-sm">
+                  {new Date(novel.lastChapterUpdate).toLocaleDateString('en-GB')}
+                </p>
               </div>
             </div>
           </div>
@@ -469,27 +443,36 @@ export default function NovelPage() {
               </div>
             </div>
 
-            <div data-orientation="horizontal" role="none" className="shrink-0 !bg-[#ffffff1f] h-[1px] w-full text-muted"></div>
+            <div className="h-px bg-white/10 my-2" />
 
             {/* Tabs */}
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-white/10">
               <button
                 onClick={() => setActiveTab('chapters')}
-                className={`px-4 py-2 font-medium transition-colors ${activeTab === 'chapters' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`px-4 py-2 font-medium transition-colors relative ${activeTab === 'chapters' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 الفصول ({totalChapters})
+                {activeTab === 'chapters' && (
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('description')}
-                className={`px-4 py-2 font-medium transition-colors ${activeTab === 'description' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`px-4 py-2 font-medium transition-colors relative ${activeTab === 'description' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 الملخص
+                {activeTab === 'description' && (
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('views')}
-                className={`px-4 py-2 font-medium transition-colors ${activeTab === 'views' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`px-4 py-2 font-medium transition-colors relative ${activeTab === 'views' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 المشاهدات
+                {activeTab === 'views' && (
+                  <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                )}
               </button>
             </div>
 
@@ -498,13 +481,13 @@ export default function NovelPage() {
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <path d="m21 21-4.3-4.3"></path>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
                     </svg>
                     <input
                       type="text"
-                      className="flex h-10 rounded-md border px-3 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 pr-4 py-2 w-full bg-gray-100/50 border-gray-300/50 focus:border-gray-400 focus:ring-0 dark:bg-white/5 dark:border-white/10 dark:focus:border-white/20"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pr-10 pl-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors"
                       placeholder="البحث برقم الفصل أو العنوان..."
                       value={chapterSearch}
                       onChange={(e) => setChapterSearch(e.target.value)}
@@ -521,9 +504,12 @@ export default function NovelPage() {
                   </motion.button>
                 </div>
 
-                <div className="mt-4 space-y-2">
+                <div className="space-y-2">
                   {loadingChapters ? (
-                    <div className="text-center py-8">جاري تحميل الفصول...</div>
+                    // Skeleton for chapters
+                    <>
+                      <Skeleton className="h-16 rounded-xl" count={5} />
+                    </>
                   ) : filteredChapters.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">لا توجد فصول مطابقة</div>
                   ) : (
@@ -534,48 +520,31 @@ export default function NovelPage() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: idx * 0.02 }}
                         whileHover={{ x: 4 }}
-                        className="flex flex-1 bg-gray-100/50 border border-gray-200/60 hover:bg-gray-200/50 dark:bg-[hsla(0,0%,55%,.05)] dark:border-[rgba(255,255,255,.12)] dark:hover:bg-[hsla(0,0%,55%,.08)] relative rounded-lg p-2 sm:p-3 transition-colors cursor-pointer"
+                        className="flex items-center justify-between bg-white/5 hover:bg-white/10 rounded-xl p-3 cursor-pointer transition-all border border-white/5 hover:border-white/20"
                         onClick={() => handleChapterClick(chapter)}
                       >
-                        <div className="w-full h-full flex items-center justify-between gap-2 sm:gap-3">
-                          <div className="flex w-full items-center text-left justify-between text-gray-900 dark:text-white min-w-0">
-                            <div className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] shrink-0 overflow-hidden rounded-md border border-gray-300 dark:border-white/10">
-                              <img
-                                alt={`الفصل ${chapter.number}`}
-                                draggable="false"
-                                loading="lazy"
-                                className="object-cover rounded-md absolute inset-0 w-full h-full"
-                                src={novel.cover}
-                              />
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="text-white w-6 h-6">
-                                  <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 0 0-5.25 5.25v3a3 3 0 0 0-3 3v6.75a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3v-6.75a3 3 0 0 0-3-3v-3c0-2.9-2.35-5.25-5.25-5.25Zm3.75 8.25v-3a3.75 3.75 0 1 0-7.5 0v3h7.5Z" clipRule="evenodd"></path>
-                                </svg>
-                              </div>
-                            </div>
-                            <div className="flex w-full flex-col pr-2 sm:pr-[.875rem] ml-2 min-w-0">
-                              <div className="flex flex-row gap-1 items-center">
-                                <span className="text-xs sm:text-sm font-medium">الفصل {chapter.number}</span>
-                              </div>
-                              <div className="flex flex-col sm:flex-row sm:justify-start sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                <time dateTime={chapter.createdAt}>
-                                  {new Date(chapter.createdAt).toLocaleDateString('en-GB')}
-                                </time>
-                              </div>
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <span className="text-primary font-bold">{chapter.number}</span>
                           </div>
-                          <div className="last flex flex-row items-center justify-between gap-2 sm:gap-3 pr-2 sm:pr-4">
-                            <div className="flex items-center gap-1.5">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle w-4 h-4 sm:w-5 sm:h-5 text-[#aab8c2]">
-                                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
-                              </svg>
-                              <p className="text-lg sm:text-2xl font-bold text-[#aab8c2]">0</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Heart className="w-4 h-4 text-muted-foreground hover:text-red-400" />
-                              <p className="text-lg sm:text-2xl font-bold text-[#aab8c2]">{chapter.views}</p>
-                            </div>
+                          <div>
+                            <div className="font-semibold">الفصل {chapter.number}</div>
+                            <div className="text-sm text-gray-400 line-clamp-1">{chapter.title}</div>
                           </div>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <MessageCircle size={14} />
+                            0
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye size={14} />
+                            {chapter.views}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar size={14} />
+                            {new Date(chapter.createdAt).toLocaleDateString('en-GB')}
+                          </span>
                         </div>
                       </motion.div>
                     ))
@@ -634,19 +603,90 @@ export default function NovelPage() {
 
             {/* Views Tab */}
             {activeTab === 'views' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                  <Eye className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-                  <div className="text-3xl font-bold">{novel.views.toLocaleString('ar-EG')}</div>
-                  <div className="text-gray-400 mt-1">إجمالي المشاهدات</div>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
+                    <Eye className="w-12 h-12 text-blue-500 mx-auto mb-3" />
+                    <div className="text-3xl font-bold">{novel.views.toLocaleString('ar-EG')}</div>
+                    <div className="text-gray-400 mt-1">إجمالي المشاهدات</div>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
+                    <div className="text-3xl font-bold">{totalChapters}</div>
+                    <div className="text-gray-400 mt-1">عدد الفصول</div>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
+                    <div className="text-3xl font-bold">{novel.favorites.toLocaleString('ar-EG')}</div>
+                    <div className="text-gray-400 mt-1">عدد المفضلات</div>
+                  </div>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                  <div className="text-3xl font-bold">{totalChapters}</div>
-                  <div className="text-gray-400 mt-1">عدد الفصول</div>
+
+                {/* Reactions (optional) */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-bold mb-4">تفاعلات الرواية</h3>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <button onClick={() => handleReaction('like')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'like' ? 'bg-blue-500/20' : 'hover:bg-white/5'}`}>
+                      <ThumbsUp className="w-8 h-8" />
+                      <span>{reactionStats.like}</span>
+                    </button>
+                    <button onClick={() => handleReaction('love')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'love' ? 'bg-red-500/20' : 'hover:bg-white/5'}`}>
+                      <Heart className="w-8 h-8 text-red-500" />
+                      <span>{reactionStats.love}</span>
+                    </button>
+                    <button onClick={() => handleReaction('funny')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'funny' ? 'bg-yellow-500/20' : 'hover:bg-white/5'}`}>
+                      <span className="text-2xl">😂</span>
+                      <span>{reactionStats.funny}</span>
+                    </button>
+                    <button onClick={() => handleReaction('sad')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'sad' ? 'bg-blue-500/20' : 'hover:bg-white/5'}`}>
+                      <span className="text-2xl">😢</span>
+                      <span>{reactionStats.sad}</span>
+                    </button>
+                    <button onClick={() => handleReaction('angry')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition ${userReaction === 'angry' ? 'bg-red-500/20' : 'hover:bg-white/5'}`}>
+                      <span className="text-2xl">😠</span>
+                      <span>{reactionStats.angry}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-6 text-center border border-white/10">
-                  <div className="text-3xl font-bold">{novel.favorites.toLocaleString('ar-EG')}</div>
-                  <div className="text-gray-400 mt-1">عدد المفضلات</div>
+
+                {/* Comments Section */}
+                <div>
+                  <h3 className="text-lg font-bold mb-4">التعليقات</h3>
+                  <div className="bg-muted/20 p-4 rounded-lg">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="w-full bg-background border border-border rounded-lg p-3 mb-2"
+                      rows={3}
+                      placeholder="أضف تعليقك..."
+                    />
+                    <button
+                      onClick={handleAddComment}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
+                    >
+                      أضف تعليق
+                    </button>
+                  </div>
+                  <div className="mt-4 space-y-4">
+                    {loadingComments ? (
+                      <Skeleton className="h-24 rounded-xl" count={3} />
+                    ) : comments.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-8">لا توجد تعليقات بعد</div>
+                    ) : (
+                      comments.map(comment => (
+                        <div key={comment._id} className="bg-muted/10 p-4 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <img src={comment.user.picture || '/default-avatar.png'} alt={comment.user.name} className="w-8 h-8 rounded-full" />
+                            <span className="font-bold">{comment.user.name}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p className="text-foreground">{comment.content}</p>
+                          <div className="flex gap-4 mt-2">
+                            <button className="text-xs text-muted-foreground hover:text-primary">رد</button>
+                            <button className="text-xs text-muted-foreground hover:text-primary">إعجاب</button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             )}

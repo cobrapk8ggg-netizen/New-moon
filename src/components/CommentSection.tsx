@@ -30,7 +30,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-bold">التعليقات</h3>
       <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
         <textarea
           value={newComment}

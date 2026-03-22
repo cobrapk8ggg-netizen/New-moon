@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import Header from '../components/Header';
 
 // بيانات مؤقتة (يمكن استبدالها بجلب من API)
 const seriesData = {
@@ -62,11 +63,19 @@ const seriesData = {
 
 const NovelPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  // هنا يمكن جلب بيانات الرواية حسب slug
-  const series = seriesData; // مؤقت
-
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState<'chapters' | 'description' | 'ratings'>('chapters');
   const [chapterSearch, setChapterSearch] = useState('');
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const series = seriesData; // مؤقت
 
   const filteredChapters = series.chapters.filter(ch =>
     ch.number.toString().includes(chapterSearch) ||
@@ -75,6 +84,8 @@ const NovelPage: React.FC = () => {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
+      <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+
       {/* خلفية ثابتة */}
       <div className="fixed w-full h-screen z-0 top-0 left-0">
         <img
@@ -88,7 +99,7 @@ const NovelPage: React.FC = () => {
         <div className="block dark:hidden" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(248,250,252,0.70) 35%, rgba(255,255,255,0.90) 70%, rgba(255,255,255,0.98) 100%)', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}></div>
       </div>
 
-      <section className="max-w-[1400px] mx-auto my-6 sm:px-2 md:px-4 lg:px-6 relative">
+      <section className="max-w-[1400px] mx-auto my-6 sm:px-2 md:px-4 lg:px-6 relative z-10">
         <div className="flex flex-col gap-4 lg:gap-5 sm:flex-row">
           {/* العمود الأيسر: صورة الغلاف + أزرار */}
           <div className="flex w-full h-auto shrink-0 flex-col gap-3 rounded-lg sm:w-[240px] lg:w-[240px] xl:w-[270px] px-2 sm:p-0 md:sticky md:top-[76px] md:self-start">
@@ -368,7 +379,7 @@ const NovelPage: React.FC = () => {
               </div>
             )}
 
-            {/* قسم مشاركة و Discord (كما في الموقع) */}
+            {/* قسم مشاركة و Discord */}
             <div className="w-full mx-auto mt-2 text-foreground">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between gap-6 bg-[#ffffff1a] p-4 rounded-lg text-foreground">

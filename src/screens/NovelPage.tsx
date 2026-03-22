@@ -1,15 +1,153 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
+import {
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Eye,
+  BookOpen,
+  ArrowUpDown,
+  Calendar,
+  MessageCircle,
+  Search,
+  ThumbsUp,
+  ThumbsDown,
+  X,
+  Check,
+  Grid,
+} from 'lucide-react';
 import Header from '../components/Header';
 import { novelService, Novel, ChapterMeta, ChapterFull } from '../services/novel';
 import { commentService, Comment } from '../services/comment';
-import { Star, ChevronLeft, ChevronRight, Heart, Eye, BookOpen, ArrowUpDown, Calendar, MessageCircle, Search, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Skeleton, NovelPageSkeleton } from '../components/Skeleton';
 import { CommentSection } from '../components/CommentSection';
-import { ChapterReader } from '../components/ChapterReader';
 import { PageSelectorModal } from '../components/PageSelectorModal';
+import toast from 'react-hot-toast';
+
+// Helper: format date as YYYY/M/D
+const formatDate = (date: Date | string) => {
+  const d = new Date(date);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+};
+
+// Get status pill style (updated colors)
+const getStatusStyle = (status: string) => {
+  if (status === 'مستمرة') return 'bg-blue-500/20 text-blue-300 border-blue-500/30';   // أزرق غامق شفاف
+  if (status === 'مكتملة') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'; // أخضر غامق شفاف
+  return 'bg-red-500/20 text-red-300 border-red-500/30'; // متوقفة
+};
+
+// Enhanced page selector modal with search and sort
+const EnhancedPageSelectorModal = ({
+  isOpen,
+  onClose,
+  totalPages,
+  currentPage,
+  onSelectPage,
+  sortOrder,
+  onToggleSort,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  totalPages: number;
+  currentPage: number;
+  onSelectPage: (page: number) => void;
+  sortOrder: 'asc' | 'desc';
+  onToggleSort: () => void;
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Generate array of page numbers respecting sort order
+  const pageNumbers = useMemo(() => {
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    return sortOrder === 'asc' ? pages : pages.reverse();
+  }, [totalPages, sortOrder]);
+
+  const filteredPages = pageNumbers.filter((p) =>
+    p.toString().includes(searchQuery)
+  );
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 50 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-md bg-black/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+          >
+            <div className="p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">اختر الصفحة</h3>
+                <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                  <X size={20} className="text-gray-400" />
+                </button>
+              </div>
+
+              <div className="flex gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="بحث برقم الصفحة..."
+                    className="w-full bg-white/10 border border-white/20 rounded-xl py-2 pr-10 pl-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors text-right"
+                  />
+                </div>
+                <button
+                  onClick={onToggleSort}
+                  className="px-3 py-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+                  title={sortOrder === 'asc' ? 'ترتيب تصاعدي' : 'ترتيب تنازلي'}
+                >
+                  <ArrowUpDown size={18} className="text-white" />
+                </button>
+              </div>
+
+              <div className="max-h-[50vh] overflow-y-auto">
+                <div className="grid grid-cols-4 gap-2">
+                  {filteredPages.map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => {
+                        onSelectPage(page);
+                        onClose();
+                      }}
+                      className={`py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        page === currentPage
+                          ? 'bg-primary/30 text-primary border border-primary/50'
+                          : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                {filteredPages.length === 0 && (
+                  <div className="text-center text-gray-400 py-8">
+                    لا توجد صفحات تطابق البحث
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export default function NovelPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -37,14 +175,20 @@ export default function NovelPage() {
   const [isPageModalOpen, setIsPageModalOpen] = useState(false);
   const [reactionStats, setReactionStats] = useState({ like: 0, love: 0, funny: 0, sad: 0, angry: 0 });
   const [userReaction, setUserReaction] = useState<string | null>(null);
+  // Local read chapters for guest users
+  const [localReadChapters, setLocalReadChapters] = useState<number[]>(() => {
+    const stored = localStorage.getItem(`read_chapters_${slug}`);
+    return stored ? JSON.parse(stored) : [];
+  });
 
   const chaptersPerPage = 25;
   const totalPages = Math.ceil(totalChapters / chaptersPerPage);
 
-  const formatDate = (date: Date | string) => {
-    const d = new Date(date);
-    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
-  };
+  // Combine server and local read chapters
+  const readChapters = useMemo(() => {
+    const combined = new Set([...userProgress.readChapters, ...localReadChapters]);
+    return Array.from(combined);
+  }, [userProgress.readChapters, localReadChapters]);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -143,23 +287,40 @@ export default function NovelPage() {
   const handleAddToFavorites = async () => {
     if (!slug || !novel) return;
     try {
+      const newStatus = !isFavorite;
+      // Optimistic update
+      setIsFavorite(newStatus);
+      setNovel((prev) => prev ? { ...prev, favorites: (prev.favorites || 0) + (newStatus ? 1 : -1) } : prev);
       await novelService.updateReadingStatus({
         novelId: slug,
         title: novel.title,
         cover: novel.cover,
         author: novel.author,
-        isFavorite: !isFavorite,
+        isFavorite: newStatus,
       });
-      setIsFavorite(!isFavorite);
+      toast.success(newStatus ? 'تمت الإضافة للمفضلة' : 'تم الحذف من المفضلة');
     } catch (err) {
-      console.error(err);
+      // Rollback
+      setIsFavorite(!isFavorite);
+      setNovel((prev) => prev ? { ...prev, favorites: (prev.favorites || 0) + (isFavorite ? 1 : -1) } : prev);
+      toast.error('فشلت العملية');
     }
   };
 
-  const handleChapterClick = async (chapter: ChapterMeta) => {
+  const handleChapterClick = (chapter: ChapterMeta) => {
     if (!slug) return;
-    // الانتقال إلى صفحة القارئ بدلاً من فتح النافذة المنبثقة
+    // Navigate to reader
     navigate(`/novel/${slug}/reader/${chapter.number}`);
+    // Mark as read locally (optimistic)
+    if (!readChapters.includes(chapter.number)) {
+      const newRead = [...readChapters, chapter.number];
+      if (localStorage.getItem('token')) {
+        // Will be updated on server when reading chapter
+      } else {
+        localStorage.setItem(`read_chapters_${slug}`, JSON.stringify(newRead));
+        setLocalReadChapters(newRead);
+      }
+    }
   };
 
   const handleAddComment = async (content: string) => {
@@ -167,8 +328,9 @@ export default function NovelPage() {
     try {
       const comment = await commentService.addComment(slug, content);
       setComments([comment, ...comments]);
+      toast.success('تم إضافة التعليق');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'فشل إضافة التعليق');
     }
   };
 
@@ -186,20 +348,12 @@ export default function NovelPage() {
     ch.title.toLowerCase().includes(chapterSearch.toLowerCase())
   );
 
-  const getStatusStyle = (status: string) => {
-    if (status === 'مستمرة') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-    if (status === 'مكتملة') return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-    return 'bg-red-500/20 text-red-300 border-red-500/30';
-  };
-
-  // Function to render description with preserved line breaks
+  // Render description with preserved line breaks
   const renderDescription = (text: string) => {
     if (!text) return null;
-    // If text contains HTML tags, render as HTML
     if (text.includes('<') && text.includes('>')) {
       return <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: text }} />;
     }
-    // Otherwise, replace newlines with <br/> and wrap in paragraphs
     const paragraphs = text.split(/\n\s*\n/);
     return (
       <div className="prose dark:prose-invert max-w-none">
@@ -278,8 +432,9 @@ export default function NovelPage() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => chapters.length > 0 && handleChapterClick(chapters[0])}
-                        className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white px-4 h-full w-full rounded bg-white/20 backdrop-blur-sm font-bold py-3 hover:bg-white/30"
+                        className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white px-4 h-full w-full rounded bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 font-bold py-3"
                       >
+                        <BookOpen size={18} className="inline ml-2" />
                         اقرأ الفصل {chapters[0]?.number || '1'}
                       </motion.button>
                     </div>
@@ -288,9 +443,13 @@ export default function NovelPage() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={handleAddToFavorites}
-                        className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white px-4 py-2 select-none w-full rounded h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30"
+                        className={`inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 select-none w-full rounded h-12 font-bold transition-all duration-300 ${
+                          isFavorite
+                            ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30'
+                            : 'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/20'
+                        }`}
                       >
-                        <Heart size={16} className={`ml-1 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                        <Heart size={16} className={`ml-1 ${isFavorite ? 'fill-primary' : ''}`} />
                         {isFavorite ? 'تمت الإضافة' : 'إضافة للمفضلة'}
                       </motion.button>
                     </div>
@@ -358,24 +517,29 @@ export default function NovelPage() {
                 <div className="text-sm text-gray-400">بواسطة {novel.author}</div>
               </div>
 
-              {/* Small screen action buttons */}
+              {/* Small screen action buttons (same enhanced style) */}
               <div className="block lg:hidden md:hidden sm:hidden">
                 <div className="flex flex-col gap-2">
                   <div className="grid grid-cols-2 gap-[.5rem] text-[.75rem] leading-4">
                     <div>
                       <button
                         onClick={() => chapters.length > 0 && handleChapterClick(chapters[0])}
-                        className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white px-4 h-full w-full rounded bg-white/20 backdrop-blur-sm font-bold py-3 hover:bg-white/30"
+                        className="items-center whitespace-nowrap text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white px-4 h-full w-full rounded bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 font-bold py-3"
                       >
+                        <BookOpen size={18} className="inline ml-2" />
                         اقرأ الفصل {chapters[0]?.number || '1'}
                       </button>
                     </div>
                     <div>
                       <button
                         onClick={handleAddToFavorites}
-                        className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white px-4 py-2 select-none w-full rounded h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30"
+                        className={`inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-4 py-2 select-none w-full rounded h-12 font-bold transition-all duration-300 ${
+                          isFavorite
+                            ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30'
+                            : 'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 border border-white/20'
+                        }`}
                       >
-                        <Heart size={16} className={`ml-1 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                        <Heart size={16} className={`ml-1 ${isFavorite ? 'fill-primary' : ''}`} />
                         {isFavorite ? 'تمت الإضافة' : 'إضافة للمفضلة'}
                       </button>
                     </div>
@@ -447,50 +611,59 @@ export default function NovelPage() {
                     ) : filteredChapters.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">لا توجد فصول مطابقة</div>
                     ) : (
-                      filteredChapters.map((chapter) => (
-                        <div
-                          key={chapter._id}
-                          onClick={() => handleChapterClick(chapter)}
-                          className="flex flex-1 bg-white/5 border border-white/10 hover:bg-white/10 relative rounded-lg p-2 sm:p-3 transition-colors cursor-pointer"
-                        >
-                          <div className="w-full h-full flex items-center justify-between gap-2 sm:gap-3">
-                            <div className="flex w-full items-center text-left justify-between text-gray-900 dark:text-white min-w-0">
-                              <div className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] shrink-0 overflow-hidden rounded-md border border-white/10 bg-black/30">
-                                <img
-                                  alt={`الفصل ${chapter.number}`}
-                                  loading="lazy"
-                                  className="object-cover rounded-md absolute inset-0 w-full h-full"
-                                  src={novel.cover}
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
-                                  <span className="text-white font-bold text-lg">{chapter.number}</span>
+                      filteredChapters.map((chapter) => {
+                        const isRead = readChapters.includes(chapter.number);
+                        return (
+                          <div
+                            key={chapter._id}
+                            onClick={() => handleChapterClick(chapter)}
+                            className="flex flex-1 bg-white/5 border border-white/10 hover:bg-white/10 relative rounded-lg p-2 sm:p-3 transition-colors cursor-pointer"
+                          >
+                            <div className="w-full h-full flex items-center justify-between gap-2 sm:gap-3">
+                              <div className="flex w-full items-center text-left justify-between text-gray-900 dark:text-white min-w-0">
+                                <div className="relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] shrink-0 overflow-hidden rounded-md border border-white/10 bg-black/30">
+                                  <img
+                                    alt={`الفصل ${chapter.number}`}
+                                    loading="lazy"
+                                    className="object-cover rounded-md absolute inset-0 w-full h-full"
+                                    src={novel.cover}
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-md">
+                                    <span className={`text-white font-bold text-lg ${isRead ? 'opacity-50' : ''}`}>
+                                      {chapter.number}
+                                    </span>
+                                  </div>
+                                  {isRead && (
+                                    <div className="absolute top-1 right-1 w-3 h-3 rounded-full bg-green-500 border border-white/30" />
+                                  )}
+                                </div>
+                                <div className="flex w-full flex-col pr-2 sm:pr-[.875rem] ml-2 min-w-0">
+                                  <div className="flex flex-row gap-1 items-center">
+                                    <span className={`text-sm sm:text-base font-semibold font-cairo line-clamp-1 ${isRead ? 'text-gray-500' : 'text-white'}`}>
+                                      {chapter.title || `الفصل ${chapter.number}`}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col sm:flex-row sm:justify-start sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-400 mt-1">
+                                    <time dateTime={chapter.createdAt}>{formatDate(chapter.createdAt)}</time>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex w-full flex-col pr-2 sm:pr-[.875rem] ml-2 min-w-0">
-                                <div className="flex flex-row gap-1 items-center">
-                                  <span className="text-sm sm:text-base font-semibold font-cairo line-clamp-1 text-white">
-                                    {chapter.title || `الفصل ${chapter.number}`}
-                                  </span>
+                              <div className="last flex flex-row items-center gap-2 sm:gap-3 pr-2 sm:pr-4">
+                                <div className="flex items-center gap-1.5">
+                                  <Eye size={14} className="text-gray-500" />
+                                  <p className="text-sm font-bold text-gray-400">{chapter.views}</p>
                                 </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-start sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-400 mt-1">
-                                  <time dateTime={chapter.createdAt}>{formatDate(chapter.createdAt)}</time>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="last flex flex-row items-center gap-2 sm:gap-3 pr-2 sm:pr-4">
-                              <div className="flex items-center gap-1.5">
-                                <Eye size={14} className="text-gray-500" />
-                                <p className="text-sm font-bold text-gray-400">{chapter.views}</p>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
 
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                      {/* Previous button (now correctly labeled السابق) */}
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -498,8 +671,8 @@ export default function NovelPage() {
                         disabled={chaptersPage === 1}
                         className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
                       >
-                        <ChevronRight size={20} />
-                        التالي
+                        <ChevronLeft size={20} />
+                        <span>السابق</span>
                       </motion.button>
 
                       <motion.button
@@ -511,6 +684,7 @@ export default function NovelPage() {
                         الصفحة {chaptersPage} من {totalPages}
                       </motion.button>
 
+                      {/* Next button (now correctly labeled التالي) */}
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -518,18 +692,20 @@ export default function NovelPage() {
                         disabled={chaptersPage === totalPages}
                         className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
                       >
-                        <ChevronLeft size={20} />
-                        السابق
+                        <span>التالي</span>
+                        <ChevronRight size={20} />
                       </motion.button>
                     </div>
                   )}
 
-                  <PageSelectorModal
+                  <EnhancedPageSelectorModal
                     isOpen={isPageModalOpen}
                     onClose={() => setIsPageModalOpen(false)}
                     totalPages={totalPages}
                     currentPage={chaptersPage}
                     onSelectPage={goToPage}
+                    sortOrder={sortOrder}
+                    onToggleSort={toggleSortOrder}
                   />
                 </div>
               )}
@@ -576,11 +752,8 @@ export default function NovelPage() {
           </div>
         </motion.section>
 
-        <ChapterReader
-          chapter={selectedChapter}
-          isOpen={showReader}
-          onClose={() => setShowReader(false)}
-        />
+        {/* Chapter Reader Modal (not used now, but keep for potential future) */}
+        {/* <ChapterReader chapter={selectedChapter} isOpen={showReader} onClose={() => setShowReader(false)} /> */}
       </div>
     </>
   );
